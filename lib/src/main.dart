@@ -5,8 +5,10 @@ class Markdown {
 
   const Markdown(this.placeholders);
 
-  String apply(String text, { String? name }) {
-    if (name != null) return placeholders.firstWhere((placeholder) => placeholder.name == name).apply(text);
+  String apply(String text, [ Set<String> names = const {} ]) {
+    if (names.isNotEmpty) {
+      return Markdown.applyAll(text, placeholders.where((placeholder) => names.contains(placeholder.name)).toSet());
+    }
     return Markdown.applyAll(text, placeholders);
   }
   
@@ -16,5 +18,24 @@ class Markdown {
       result = markdown.apply(result);
     }
     return result;
+  }
+
+  /* -= Alternatives =- */
+
+  factory Markdown.map(Map<String, MarkdownReplace> placeholders) {
+    return Markdown(placeholders.entries.map((entry) {
+      final pattern = entry.key;
+      final replace = entry.value;
+      
+      if (pattern.startsWith('<') && pattern.endsWith('>')) {
+        return MarkdownPlaceholder.tag(pattern.substring(1, pattern.length - 1), replace);
+      }
+    
+      if (pattern.startsWith('/') && pattern.endsWith('/')) {
+        return MarkdownPlaceholder.regexp(pattern.substring(1, pattern.length - 1), replace);
+      }
+
+      return MarkdownPlaceholder.enclosed(pattern, replace);
+    }).toSet());
   }
 }

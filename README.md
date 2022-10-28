@@ -1,9 +1,9 @@
 [![Pub.dev package](https://img.shields.io/badge/pub.dev-marked-blue)](https://pub.dev/packages/marked)
 [![GitHub repository](https://img.shields.io/badge/GitHub-Markdown--dart-blue?logo=github)](https://github.com/DrafaKiller/Markdown-dart)
 
-# Marked - Markdown syntax
+# Markdown
 
-A simple Markdown parser for Dart.
+A simple Markdown parser for Dart.<br>
 Create your own custom Markdown syntax.
 
 ## Features
@@ -31,13 +31,28 @@ Create a Markdown instance with all the placeholders you want to use.
 Then, use the `apply` method to parse the Markdown syntax.
 
 ```dart
-final markdown = Markdown({
-  MarkdownPlaceholder.enclosed('**', (text, match) => '<b>$text</b>'),
-  ...
+import 'package:marked/marked.dart';
+
+final markdown = Markdown.map({
+  '**': (text, match) => '<b>$text</b>',
+  '*': (text, match) => '<i>$text</i>',
+  '~~': (text, match) => '<strike>$text</strike>',
+  '__': (text, match) => '<u>$text</u>',
+  '`': (text, match) => '<code>$text</code>',
 });
 
-print(markdown.apply('Hello, **World**!'));
-// Output: Hello, <b>World</b>!
+void main() {
+  print(
+    markdown.apply('''
+      Hello **World**!
+      __Looks *pretty* easy__
+    ''')
+  );
+
+  // Output:
+  //   Hello <b>World</b>!
+  //   <u>Looks <i>pretty</i> easy</u>
+}
 ```
 
 ## Placeholders
@@ -49,29 +64,26 @@ They are used to replace a specific part of the text that matches a pattern.
 MarkdownPlaceholder(RegExp(r'\*\*(.*?)\*\*'), (text, match) => '<b>$text</b>');
 ```
 
-When creating a placeholder, you can atributte a name to it. This allows you to specify which placeholder to apply.
-```dart
-MarkdownPlaceholder(name: 'bold', ...);
-
-markdown.apply('Hello, **World**!', [ 'bold' ]);
-```
-
-To make it easier to create placeholders, there are some predefined constructors:
-
-### Enclosed
-
-The `MarkdownPlaceholder.enclosed` method creates a placeholder that matches a text enclosed by a specific character.
+To make it easier to create placeholders, there are some predefined methods:
 
 ```dart
 MarkdownPlaceholder.enclosed('**', (text, match) => '<b>$text</b>');
+// Hello **World**! -> Hello <b>World</b>!
+
+MarkdownPlaceholder.tag('strong', (text, match) => '<b>$text</b>');
+// Hello <strong>World</strong>! -> Hello <b>World</b>!
+
+MarkdownPlaceholder.regexp(r'\*\*(.*?)\*\*', (text, match) => '<b>$text</b>');
+// Hello **World**! -> Hello <b>World</b>!
 ```
 
-### Tag
-
-The `MarkdownPlaceholder.tag` method creates a placeholder that matches a text enclosed by a specific tag, HTML-like.
-
+When creating a placeholder, you can attribute a name to it. This allows you to specify which placeholder to apply.
 ```dart
-MarkdownPlaceholder.tag('b', (text, match) => '<b>$text</b>');
+... ({
+  MarkdownPlaceholder(name: 'bold', ... );
+});
+
+markdown.apply('Hello, **World**!', { 'bold' });
 ```
 
 ## Example
@@ -92,3 +104,8 @@ void main() {
   // HTML Markdown: <b>bold</b> <i>italic</i> <strike>strike</strike> <code>code</code>
 }
 ```
+
+More Examples:
+* [HTML Markdown](https://pub.dev/packages/marked/example)
+* [Markdown Map](https://github.com/DrafaKiller/Markdown-dart/blob/main/example/mapped.dart)
+* [Named Placeholders](https://github.com/DrafaKiller/Markdown-dart/blob/main/example/named.dart)
