@@ -28,6 +28,7 @@ import 'package:marked/marked.dart';
 ## Usage
 
 Create a Markdown instance with all the placeholders you want to use.
+
 Then, use the `apply` method to parse the Markdown syntax.
 
 ```dart
