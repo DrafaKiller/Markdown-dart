@@ -8,7 +8,7 @@ final htmlMarkdown = Markdown({
   MarkdownPlaceholder.enclosed('`', (text, match) => '<code>$text</code>'),
   MarkdownPlaceholder.regexp(
     r'\[(.+?)\]\((.+?)\)',
-    (text, match) => '<a href="${ match.group(1)! }">${ match.group(2)! }</a>'
+    (text, match) => '<a href="${ match.group(2)! }">$text</a>'
   ),
 });
 
@@ -20,7 +20,7 @@ void main() {
       __underline__
       ~~strike~~
       `code`
-      [https://example.com](Example Title)
+      [Example Title](https://example.com)
 
       __One **inside** another__
   '''));
