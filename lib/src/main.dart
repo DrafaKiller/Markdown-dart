@@ -83,8 +83,6 @@ class Markdown {
   Markdown(this.placeholders, { String? escape, RegExp? escapePattern })
     : escapePattern = escapePattern ?? getEscapeUsing(escape ?? r'\');
 
-  
-
   /// Apply the placeholders from the Markdown.<br>
   /// If the list of names is empty, it will apply all placeholders currently attached.
   /// 
@@ -144,10 +142,6 @@ class Markdown {
     });
   }
   
-  static void main() {
-    print(_decode('test %74%65%73%74%20%31%32%33 123'));
-  }
-  
   /// Apply all the placeholders given to the text.
   /// 
   /// Returns the parsed result text.
@@ -163,7 +157,7 @@ class Markdown {
     if (pattern.isEmpty) return null;
 
     pattern = RegExp.escape(pattern);
-    return RegExp('(?=(?<!$pattern)$pattern$pattern)*$pattern');
+    return RegExp('(?<=(?<!$pattern)(?:$pattern$pattern)*)$pattern(?!$pattern)');
   }
 
   /* -= Alternatives =- */

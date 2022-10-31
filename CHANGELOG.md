@@ -2,7 +2,7 @@
 
 Added:
 - Markdown escaping, see [escape example](https://github.com/DrafaKiller/Markdown-dart/blob/main/example/escape.dart)
-- Markdown escape and decoding, using UTF-8 to Hexadecimal
+- Markdown escape and decoding, using UTF-8 to Hexadecimal, URL-like encoding
 
 ## 0.0.2
 
