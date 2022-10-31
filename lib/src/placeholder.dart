@@ -34,19 +34,23 @@
 /// ```
 class MarkdownPlaceholder {
   final String? name;
-  final RegExp regex;
+  final RegExp pattern;
   final MarkdownReplace replace;
 
-  MarkdownPlaceholder(this.regex, this.replace, { this.name });
-
-  /// Apply the placeholder to the text.<br>
+  MarkdownPlaceholder(this.pattern, this.replace, { this.name });
+/// Apply the placeholder to the text.<br>
   /// Replace all the matches with the result of the `replace` function.
   /// 
   /// Returns the parsed result text.
-  String apply(String text) => text.replaceAllMapped(regex, (match) => replace(match.group(1) ?? '', match));
+  String apply(String text, { Set<int> ignoreCharacters = const {} }) =>
+    text.replaceAllMapped(pattern, (match) {
+      
+      if (ignoreCharacters.contains(match.start)) return match.group(0)!;
+      return replace(match.group(1) ?? '', match);
+    });
 
   /// Returns whether the placeholder matches the given text.
-  bool matches(String text) => regex.hasMatch(text);
+  bool matches(String text) => pattern.hasMatch(text);
 
   /* -= Alternatives =- */
 

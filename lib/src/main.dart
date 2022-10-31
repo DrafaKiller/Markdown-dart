@@ -84,11 +84,30 @@ class Markdown {
   /// ## Escaping
   /// 
   /// You can set an escape pattern to prevent placeholders from being applied.
-  /// To disable escaping, set the `escapePattern` to an empty string.
+  /// To disable escaping, set the `escape` to an empty string.
+  /// 
+  /// You may also escape the escape by repeating it twice, although you will only need to escape the ones before placeholders.
   /// 
   /// By default, the escape pattern is set to `\`.
-  Markdown(this.placeholders, { String? escape, RegExp? escapePattern })
-    : escapePattern = escapePattern ?? getEscapeUsing(escape ?? r'\');
+  /// 
+  /// ```dart
+  /// final markdown = Markdown.map({ ... }, escape: r'\');
+  /// 
+  /// print(
+  ///   markdown.apply(r'''
+  ///     Hello **World**!
+  ///     Hello \**World**!
+  ///     Hello \\**World**!
+  ///   ''')
+  /// );
+  /// 
+  /// // Output:
+  /// //   Hello <b>World</b>!
+  /// //   Hello **World**!
+  /// //   Hello \<b>World</b>!
+  /// ```
+  Markdown(this.placeholders, { String? escape })
+    : escapePattern = getEscapeUsing(escape ?? r'\');
 
   /// Apply the placeholders from the Markdown.<br>
   /// If the list of names is empty, it will apply all placeholders currently attached.
@@ -99,79 +118,30 @@ class Markdown {
   /// If there are no matching escaping patterns, or if the escape pattern is set to an empty string,
   /// no performance will be lost.
   String apply(String text, [ Set<String> names = const {} ]) {
-    text = encode(text);
+    final ignorePositions = _getEscapePositions(text);
     text = Markdown.applyAll(
       text,
       names.isNotEmpty
         ? placeholders.where((placeholder) => names.contains(placeholder.name)).toSet()
-        : placeholders
-    );  
-    return decode(text);
+        : placeholders,
+      ignorePositions: ignorePositions
+    );
+    return _clearEscapeCharacters(text);
   }
 
-  String encode(String text) {
-    if (escapePattern == null) return text;
-
-    int offset = 0;
-    for (final match in escapePattern!.allMatches(text)) {
-      final actualStart = match.start + offset;
-      final actualEnd = match.end + offset;
-
-      final textAfter = text.substring(actualEnd);
-      for (final placeholder in placeholders) {
-        final placeholderMatch = placeholder.regex.firstMatch(textAfter);
-        if (placeholderMatch != null && placeholderMatch.start == 0) {
-          text = text.replaceRange(actualStart, actualStart + placeholderMatch.end + 1, _encode(placeholderMatch.group(0)!));
-          offset += placeholderMatch.end * 2 - 1;
-          break;
-        }
-      }
-    }
-
-    return text; 
-  }
-  
-  String decode(String text) {
-    if (escapePattern == null) return text;
-    return _decode(text);
-  }
-
-  static String _encode(String text, [ Pattern? pattern ]) {
-    if (pattern != null) return text.replaceAllMapped(pattern, (match) => _encode(match.group(0)!));
-    return utf8.encoder
-      .convert(text)
-      .map((value) => '%${ value.toRadixString(16).padLeft(2, '0') }')
-      .join('');
-  }
-
-  static String _decode(String text) {
-    return text.replaceAllMapped(RegExp(r'(?:%\w{2})+'), (match) {
-      return utf8.decoder
-        .convert(
-          RegExp(r'%(\w{2})')
-            .allMatches(match.group(0)!)
-            .map((value) => int.parse(value.group(1)!, radix: 16))
-            .toList()
-        );
-    });
-  }
-  
   /// Apply all the placeholders given to the text.
   /// 
   /// Returns the parsed result text.
-  static String applyAll(String text, Set<MarkdownPlaceholder> placeholders) {
-    String result = text;
+  static String applyAll(String text, Set<MarkdownPlaceholder> placeholders, { Set<int> ignorePositions = const {} }) {
     for (final markdown in placeholders) {
-      result = markdown.apply(result);
+      text = markdown.apply(text, ignoreCharacters: ignorePositions);
     }
-    return result;
+    return text;
   }
 
   static RegExp? getEscapeUsing(String pattern) {
     if (pattern.isEmpty) return null;
-
-    pattern = RegExp.escape(pattern);
-    return RegExp('(?<=(?<!$pattern)(?:$pattern$pattern)*)$pattern(?!$pattern)');
+    return RegExp(RegExp.escape(pattern));
   }
 
   /* -= Alternatives =- */
@@ -215,20 +185,63 @@ class Markdown {
   ///   //   <u>Looks <i>pretty</i> easy</u>
   /// }
   /// ```
-  factory Markdown.map(Map<String, MarkdownReplace> placeholders) {
-    return Markdown(placeholders.entries.map((entry) {
-      final pattern = entry.key;
-      final replace = entry.value;
+  factory Markdown.map(Map<String, MarkdownReplace> placeholders, { String? escape }) {
+    return Markdown(
+      placeholders.entries.map((entry) {
+        final pattern = entry.key;
+        final replace = entry.value;
+        
+        if (pattern.startsWith('<') && pattern.endsWith('>')) {
+          return MarkdownPlaceholder.tag(pattern.substring(1, pattern.length - 1), replace);
+        }
       
-      if (pattern.startsWith('<') && pattern.endsWith('>')) {
-        return MarkdownPlaceholder.tag(pattern.substring(1, pattern.length - 1), replace);
-      }
-    
-      if (pattern.startsWith('/') && pattern.endsWith('/')) {
-        return MarkdownPlaceholder.regexp(pattern.substring(1, pattern.length - 1), replace);
-      }
+        if (pattern.startsWith('/') && pattern.endsWith('/')) {
+          return MarkdownPlaceholder.regexp(pattern.substring(1, pattern.length - 1), replace);
+        }
 
-      return MarkdownPlaceholder.enclosed(pattern, replace);
-    }).toSet());
+        return MarkdownPlaceholder.enclosed(pattern, replace);
+      }).toSet(),
+      escape: escape
+    );
+  }
+
+  /* -= Advanced Methods =- */
+
+  Set<int> _getEscapePositions(String text) {
+    if (escapePattern == null) return {};
+    
+    final positions = <int>{};
+    int previous = -1;
+    for (final match in escapePattern!.allMatches(text)) {
+      if (previous == match.start) continue;
+      positions.add(match.end);
+      previous = match.end;
+    }
+    return positions;
+  }
+
+  Set<int> _getPlaceholderPositions(String text) {
+    final positions = <int>{};
+    for (final placeholder in placeholders) {
+      for (final match in placeholder.pattern.allMatches(text)) {
+        positions.add(match.start);
+      }
+    }
+    return positions;
+  }
+
+  String _clearEscapeCharacters(String text) {
+    if (escapePattern == null) return text;
+
+    final placeholderPositions = _getPlaceholderPositions(text);
+
+    int previous = -1;
+    return text.replaceAllMapped(escapePattern!, (match) {
+      if (previous == match.start || placeholderPositions.contains(match.end)) {
+        return '';
+      }
+      previous = match.end;
+      return match.group(0)!;
+    });
   }
 }
