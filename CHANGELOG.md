@@ -1,3 +1,9 @@
+## 0.1.0
+
+Added:
+- Markdown escaping, see [escape example](https://github.com/DrafaKiller/Markdown-dart/blob/main/example/escape.dart)
+- Markdown escape and decoding, using UTF-8 to Hexadecimal
+
 ## 0.0.2
 
 Added:

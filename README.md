@@ -9,7 +9,7 @@ Create your own custom Markdown syntax.
 ## Features
 
 * Attach placeholder replacements to your Markdown syntax
-* Simple to create a Markdown syntax
+* Simple to create and setup a Markdown syntax
 * Easily improvable and extendable, with better organization
 * Generalized for most use cases
 

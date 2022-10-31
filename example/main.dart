@@ -12,18 +12,21 @@ final htmlMarkdown = Markdown({
   ),
 });
 
-void main() {
-  print(htmlMarkdown.apply('''
-    HTML Markdown:
-      **bold**
-      *italic*
-      __underline__
-      ~~strike~~
-      `code`
-      [Example Title](https://example.com)
 
-      __One **inside** another__
-  '''));
+void main() {
+  print(
+    htmlMarkdown.apply('''
+      HTML Markdown:
+        **bold**
+        *italic*
+        __underline__
+        ~~strike~~
+        `code`
+        [Example Title](https://example.com)
+
+        __One **inside** another__
+    ''')
+  );
 
   // [Output]
   // HTML Markdown:
@@ -35,4 +38,3 @@ void main() {
   //
   //   <u>One <b>inside</b> another</u>
 }
-

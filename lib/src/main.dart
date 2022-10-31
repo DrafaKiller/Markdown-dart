@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'placeholder.dart';
 
 /// # Markdown
@@ -46,6 +48,7 @@ import 'placeholder.dart';
 /// ```
 class Markdown {
   final Set<MarkdownPlaceholder> placeholders;
+  final RegExp? escapePattern;
 
   /// Create a Markdown instance with all the placeholders you want to use.
   /// 
@@ -77,17 +80,72 @@ class Markdown {
   ///   //   <u>Looks <i>pretty</i> easy</u>
   /// }
   /// ```
-  const Markdown(this.placeholders);
+  Markdown(this.placeholders, { String? escape, RegExp? escapePattern })
+    : escapePattern = escapePattern ?? getEscapeUsing(escape ?? r'\');
+
+  
 
   /// Apply the placeholders from the Markdown.<br>
   /// If the list of names is empty, it will apply all placeholders currently attached.
   /// 
   /// Returns the parsed result text.
   String apply(String text, [ Set<String> names = const {} ]) {
-    if (names.isNotEmpty) {
-      return Markdown.applyAll(text, placeholders.where((placeholder) => names.contains(placeholder.name)).toSet());
+    text = encode(text);
+    text = Markdown.applyAll(
+      text,
+      names.isNotEmpty
+        ? placeholders.where((placeholder) => names.contains(placeholder.name)).toSet()
+        : placeholders
+    );
+    return decode(text);
+  }
+
+  String encode(String text) {
+    if (escapePattern == null) return text;
+
+    int offset = 0;
+    for (final match in escapePattern!.allMatches(text)) {
+      final actualStart = match.start + offset;
+      final actualEnd = match.end + offset;
+
+      final textAfter = text.substring(actualEnd);
+      for (final placeholder in placeholders) {
+        final placeholderMatch = placeholder.regex.firstMatch(textAfter);
+        if (placeholderMatch != null && placeholderMatch.start == 0) {
+          text = text.replaceRange(actualStart, actualStart + placeholderMatch.end + 1, _encode(placeholderMatch.group(0)!));
+          offset += placeholderMatch.end * 2 - 1;
+          break;
+        }
+      }
     }
-    return Markdown.applyAll(text, placeholders);
+
+    return text; 
+  }
+  
+  String decode(String text) => _decode(text);
+
+  static String _encode(String text, [ Pattern? pattern ]) {
+    if (pattern != null) return text.replaceAllMapped(pattern, (match) => _encode(match.group(0)!));
+    return utf8.encoder
+      .convert(text)
+      .map((value) => '%${ value.toRadixString(16).padLeft(2, '0') }')
+      .join('');
+  }
+
+  static String _decode(String text) {
+    return text.replaceAllMapped(RegExp(r'(?:%\w{2})+'), (match) {
+      return utf8.decoder
+        .convert(
+          RegExp(r'%(\w{2})')
+            .allMatches(match.group(0)!)
+            .map((value) => int.parse(value.group(1)!, radix: 16))
+            .toList()
+        );
+    });
+  }
+  
+  static void main() {
+    print(_decode('test %74%65%73%74%20%31%32%33 123'));
   }
   
   /// Apply all the placeholders given to the text.
@@ -101,9 +159,14 @@ class Markdown {
     return result;
   }
 
+  static RegExp? getEscapeUsing(String pattern) {
+    if (pattern.isEmpty) return null;
+
+    pattern = RegExp.escape(pattern);
+    return RegExp('(?=(?<!$pattern)$pattern$pattern)*$pattern');
+  }
+
   /* -= Alternatives =- */
-
-
 
   /// Create a Markdown instance with all the placeholders you want to use.
   /// Then, use the `apply` method to parse the Markdown syntax.

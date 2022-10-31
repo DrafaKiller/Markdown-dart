@@ -88,3 +88,4 @@ class MarkdownPlaceholder {
 /* -= Type Aliases =- */
 
 typedef MarkdownReplace = String Function(String text, Match match);
+typedef MarkdownEncode = String Function(String text);

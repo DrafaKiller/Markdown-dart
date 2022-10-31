@@ -11,16 +11,18 @@ final htmlMarkdown = Markdown.map({
 });
 
 void main() {
-  print(htmlMarkdown.apply('''
-    HTML Markdown:
-      **bold**
-      *italic*
-      __underline__
-      ~~strike~~
-      `code`
-      [Example Title](https://example.com)
-      <strong>bold</strong>
-  '''));
+  print(
+    htmlMarkdown.apply('''
+      HTML Markdown:
+        \\**bold**
+        *italic*
+        __underline__
+        ~~strike~~
+        `code`
+        [Example Title](https://example.com)
+        <strong>bold</strong>
+    ''')
+  );
 
   // [Output]
   // HTML Markdown:
