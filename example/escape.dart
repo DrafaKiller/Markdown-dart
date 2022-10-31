@@ -8,7 +8,11 @@ void main() {
   print(
     markdown.apply('''
       Hello **World**!
-      Hello \\**World**!
+      Hello \*World*!
+      Hello \\*World*!
+      Hello \\\*World*!
+
+      * test  test *
     ''')
   );
 

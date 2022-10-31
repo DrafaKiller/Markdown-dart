@@ -61,7 +61,11 @@ class MarkdownPlaceholder {
   /// // Hello **World**! -> Hello <b>World</b>!
   /// ```
   factory MarkdownPlaceholder.regexp(String pattern, MarkdownReplace replace, { String? name }) {
-    return MarkdownPlaceholder(name: name, RegExp(pattern), replace);
+    return MarkdownPlaceholder(
+      name: name,
+      RegExp(pattern),
+      replace
+    );
   }
 
   /// Create a placeholder that matches the given enclosed pattern.
@@ -73,9 +77,23 @@ class MarkdownPlaceholder {
   /// // Hello **World**! -> Hello <b>World</b>!
   /// ```
   factory MarkdownPlaceholder.enclosed(String start, MarkdownReplace replace, { String? name, String? end }) {
+    final mono = 
+      (start == end || end == null) && start.split('').toSet().length == 1
+      ? RegExp.escape(start.split('').toSet().first)
+      : null;
+
     start = RegExp.escape(start);
     end = end != null ? RegExp.escape(end) : start;
-    return MarkdownPlaceholder.regexp(name: name, '$start(.+?)$end', replace);
+
+    final temp = r'(?<=(?<!\\)(\\\\)*)';
+
+    return MarkdownPlaceholder.regexp(
+      name: name,
+      mono != null
+        ? '$start(.+?)$end'
+        : '$temp$start(?!$start)(.+?)$temp$end',
+      replace
+    );
   }
 
   /// Create a placeholder that matches the given tag, HTML-like.
@@ -85,7 +103,12 @@ class MarkdownPlaceholder {
   /// // Hello <strong>World</strong>! -> Hello <b>World</b>!
   /// ```
   factory MarkdownPlaceholder.tag(String tag, MarkdownReplace replace, { String? name }) {
-    return MarkdownPlaceholder.enclosed(name: name, '<$tag>', end: '</$tag>', replace);
+    return MarkdownPlaceholder.enclosed(
+      name: name,
+      '<$tag>',
+      end: '</$tag>',
+      replace
+    );
   }
 }
 

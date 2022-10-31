@@ -89,10 +89,14 @@ markdown.apply('Hello, **World**!', { 'bold' });
 
 ## Escaping
 
+**<t  est ** tt>**
+
 You can set an escape pattern to prevent placeholders from being applied.
 To disable escaping, set the `escape` to an empty string.
 
 You may also escape the escape by repeating it twice, although you will only need to escape the ones before placeholders.
+
+When escaping a block of placeholders, it will block all placeholders directly in front of it.
 
 By default, the escape pattern is set to `\`.
 
