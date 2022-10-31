@@ -1,35 +1,35 @@
 import 'package:marked/marked.dart';
 
-final htmlMarkdown = Markdown.map({
+final markdown = Markdown.map({
   '**': (text, match) => '<b>$text</b>',
-  '*': (text, match) => '<i>$text</i>',
-  '__': (text, match) => '<u>$text</u>',
-  '~~': (text, match) => '<strike>$text</strike>',
-  '`': (text, match) => '<code>$text</code>',
-  r'/\[(.+?)\]\((.+?)\)/': (text, match) => '<a href="${ match.group(2)! }">$text</a>',
-  '<strong>': (text, match) => '<b>$text</b>',
+  '[*]': (text, match) => '<i>$text</i>',
+  '<tag>': (text, match) => '<other>$text</other>',
+  '/from here(.*?)to here/': (text, match) => '[$text]'
+}, placeholders: {
+  MarkdownPlaceholder.enclosed('/*', end: '*/', (text, match) => '<comment>$text</comment>'),
 });
 
 void main() {
   print(
-    htmlMarkdown.apply('''
-      HTML Markdown:
-        \\**bold**
-        *italic*
-        __underline__
-        ~~strike~~
-        `code`
-        [Example Title](https://example.com)
-        <strong>bold</strong>
+    markdown.apply('''
+      This is a **bold** text.
+      This is a sticky *token*.
+       > Doesn't work like * this *, unlike ** the bold **.
+      This is a <tag>text</tag>.
+      This is a text from here ... something else ... to here.
+      This is extra customizable /* comment */.
+      This is nested /* a /* b */ a */.
+      This is also nested ***bold and italic***.
     ''')
   );
 
-  // [Output]
-  // HTML Markdown:
-  //   <b>bold</b>
-  //   <i>italic</i>
-  //   <strike>strike</strike>
-  //   <code>code</code>
-  //   <a href="https://example.com">Example Title</a>
-  //   <b>bold</b>
+  // Output:
+  // This is a <b>bold</b> text.
+  // This is a sticky <i>text</i>.
+  //  > Doesn't work like * this *, unlike <b> the bold </b>.
+  // This is a <other>text</other>.
+  // This is a text [ ... something else ... ].
+  // This is extra customizable <comment> comment </comment>.
+  // This is nested <comment> a <comment> b </comment> a </comment>.
+  // This is also nested <i><b>bold and italic</b></i>.
 }

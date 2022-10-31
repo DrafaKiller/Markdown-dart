@@ -1,40 +1,31 @@
 import 'package:marked/marked.dart';
 
-final htmlMarkdown = Markdown({
-  MarkdownPlaceholder.enclosed('**', (text, match) => '<b>$text</b>'),
-  MarkdownPlaceholder.enclosed('*', (text, match) => '<i>$text</i>'),
-  MarkdownPlaceholder.enclosed('__', (text, match) => '<u>$text</u>'),
-  MarkdownPlaceholder.enclosed('~~', (text, match) => '<strike>$text</strike>'),
-  MarkdownPlaceholder.enclosed('`', (text, match) => '<code>$text</code>'),
-  MarkdownPlaceholder.regexp(
-    r'\[(.+?)\]\((.+?)\)',
-    (text, match) => '<a href="${ match.group(2)! }">$text</a>'
+final markdown = Markdown.map({
+  '**': (text, match) => '<b>$text</b>',
+  '*': (text, match) => '<i>$text</i>',
+  '***': (text, match) => '<i>$text</i>',
+  '__': (text, match) => '<u>$text</u>',
+  '<custom>' : (text, match) => '<tag>$text</tag>',
+}, placeholders: {
+  MarkdownPlaceholder.enclosed(
+    'from here', end: 'to here',
+    (text, match) => '[$text]'
   ),
 });
 
-
 void main() {
   print(
-    htmlMarkdown.apply('''
-      HTML Markdown:
-        **bold**
-        *italic*
-        __underline__
-        ~~strike~~
-        `code`
-        [Example Title](https://example.com)
-
-        __One **inside** another__
+    markdown.apply('''
+      Hello **World**!
+      __Looks *pretty* easy__ 
+      <custom>Custom tags</custom>
+      from here ... do anything ... to here
     ''')
   );
 
-  // [Output]
-  // HTML Markdown:
-  //   <b>bold</b>
-  //   <i>italic</i>
-  //   <strike>strike</strike>
-  //   <code>code</code>
-  //   <a href="https://example.com">Example Title</a>
-  //
-  //   <u>One <b>inside</b> another</u>
+  // Output:
+  //   Hello <b>World</b>!
+  //   <u>Looks <i>pretty</i> easy</u>
+  //   <tag>Custom tags</tag>
+  //   [ ... do anything ... ]
 }

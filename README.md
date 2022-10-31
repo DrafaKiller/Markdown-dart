@@ -3,15 +3,15 @@
 
 # Markdown
 
-A simple Markdown parser for Dart.<br>
+A simple-setup Markdown syntax parser for Dart.
 Create your own custom Markdown syntax.
 
 ## Features
 
-* Attach placeholder replacements to your Markdown syntax
-* Simple to create and setup a Markdown syntax
-* Easily improvable and extendable, with better organization
-* Generalized for most use cases
+* Simple Markdown syntax setup
+* Generic Markdown-base for any use-case
+* Apply the Markdown to any text
+* Attach placeholders to modify the input
 
 ## Getting started
 
@@ -37,9 +37,7 @@ import 'package:marked/marked.dart';
 final markdown = Markdown.map({
   '**': (text, match) => '<b>$text</b>',
   '*': (text, match) => '<i>$text</i>',
-  '~~': (text, match) => '<strike>$text</strike>',
   '__': (text, match) => '<u>$text</u>',
-  '`': (text, match) => '<code>$text</code>',
 });
 
 void main() {
@@ -78,14 +76,29 @@ MarkdownPlaceholder.regexp(r'\*\*(.*?)\*\*', (text, match) => '<b>$text</b>');
 // Hello **World**! -> Hello <b>World</b>!
 ```
 
-When creating a placeholder, you can attribute a name to it. This allows you to specify which placeholder to apply.
-```dart
-... ({
-  MarkdownPlaceholder(name: 'bold', ... );
-});
+## Escaping
 
-markdown.apply('Hello, **World**!', { 'bold' });
-```
+  To escape a placeholder, you can use the `\` character.
+  You may also escape the escape character, instances of **\\\\** will be replaced with **\\**, since they are escaped.
+
+  ```dart
+  final markdown = Markdown.map({ ... }, escape: r'\');
+
+  print(
+    markdown.apply(r'''
+      Hello **World**!
+      Hello \**World**!
+      Hello \\**World**!
+    ''')
+  );
+
+  // Output:
+  //   Hello <b>World</b>!
+  //   Hello **World**!
+  //   Hello \<b>World</b>!
+  ```
+
+  An input can be manually escaped and unescaped using the methods `markdown.escape(input)` and `markdown.unescape(input)`.
 
 ## Example
 
@@ -102,7 +115,7 @@ final htmlMarkdown = Markdown({
 void main() {
   print(htmlMarkdown.apply('HTML Markdown: **bold** *italic* ~~strike~~ `code`'));
   // [Output]
-  // HTML Markdown: <b>bold</b> <i>italic</i> <strike>strike</strike> <code>code</code>
+  //   HTML Markdown: <b>bold</b> <i>italic</i> <strike>strike</strike> <code>code</code>
 }
 ```
 

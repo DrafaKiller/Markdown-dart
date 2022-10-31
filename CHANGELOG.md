@@ -2,7 +2,13 @@
 
 Added:
 - Markdown escaping, see [escape example](https://github.com/DrafaKiller/Markdown-dart/blob/main/example/escape.dart)
-- Markdown escape and decoding, using UTF-8 to Hexadecimal, URL-like encoding
+
+Changed:
+- Renamed `placeholder.regex` to `placeholder.pattern`
+- Enclosed pattern, a `*` won't match `**` anymore because it must be a single match
+
+Removed:
+- `Markdown.applyAll` method, now you must instantiate a `Markdown` object and call `apply` method due to escaping
 
 ## 0.0.2
 
