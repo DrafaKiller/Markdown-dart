@@ -80,6 +80,13 @@ class Markdown {
   ///   //   <u>Looks <i>pretty</i> easy</u>
   /// }
   /// ```
+  /// 
+  /// ## Escaping
+  /// 
+  /// You can set an escape pattern to prevent placeholders from being applied.
+  /// To disable escaping, set the `escapePattern` to an empty string.
+  /// 
+  /// By default, the escape pattern is set to `\`.
   Markdown(this.placeholders, { String? escape, RegExp? escapePattern })
     : escapePattern = escapePattern ?? getEscapeUsing(escape ?? r'\');
 
@@ -87,6 +94,10 @@ class Markdown {
   /// If the list of names is empty, it will apply all placeholders currently attached.
   /// 
   /// Returns the parsed result text.
+  /// 
+  /// This encodes the placeholders that match a escape pattern behind, applys the markdown and then decodes.<br>
+  /// If there are no matching escaping patterns, or if the escape pattern is set to an empty string,
+  /// no performance will be lost.
   String apply(String text, [ Set<String> names = const {} ]) {
     text = encode(text);
     text = Markdown.applyAll(
@@ -94,7 +105,7 @@ class Markdown {
       names.isNotEmpty
         ? placeholders.where((placeholder) => names.contains(placeholder.name)).toSet()
         : placeholders
-    );
+    );  
     return decode(text);
   }
 
@@ -120,7 +131,10 @@ class Markdown {
     return text; 
   }
   
-  String decode(String text) => _decode(text);
+  String decode(String text) {
+    if (escapePattern == null) return text;
+    return _decode(text);
+  }
 
   static String _encode(String text, [ Pattern? pattern ]) {
     if (pattern != null) return text.replaceAllMapped(pattern, (match) => _encode(match.group(0)!));
