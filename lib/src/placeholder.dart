@@ -1,7 +1,8 @@
-import 'package:marked/src/error.dart';
+import 'dart:math' as math;
+
 import 'package:marked/src/node.dart';
 import 'package:marked/src/pattern.dart';
-import 'package:marked/src/symbol.dart';
+import 'package:marked/src/schema.dart';
 
 class MarkdownPlaceholder {
   final MarkdownPattern pattern;
@@ -21,28 +22,25 @@ class MarkdownPlaceholder {
     }
 
     final text = node.apply();
-    final difference = input.length - text.length;
+    final end = node.translate(node.end.end);
 
-    if (pattern.symmetrical && level > 0) {
-      final post = pattern.end.firstMatch(input.substring(node.end.end));
-      if (post != null) return text;
-    }
-
-    return text.replaceRange(node.end.end - difference, null, apply(text.substring(node.end.end - difference), level: level));
+    return text.replaceRange(end, null, apply(text.substring(end), level: level));
   }
 
   MarkdownNode? _parse(String input, { int level = 0 }) {
     final start = pattern.start.firstMatch(input);
     if (start == null) return null;
-    final preEnd = pattern.end.firstMatch(input.substring(start.end));
-    if (preEnd == null) return null;
 
-    if (_isNextNested(input.substring(start.end), level: level)) {
+    if (_nextLevel(input.substring(start.end), level: level) > level) {
       input = input.replaceRange(start.end, null, apply(input.substring(start.end), level: level + 1));
     }
-    
+
     final end = pattern.end.firstMatch(input.substring(start.end));
     if (end == null) return null;
+
+    if (pattern.symmetrical && start.end == start.end + end.start) {
+      return null;
+    }
 
     return MarkdownNode(
       this,
@@ -53,17 +51,15 @@ class MarkdownPlaceholder {
     );
   }
 
-  bool _isNextNested(String input, { int level = 0 }) {
+  int _nextLevel(String input, { int level = 0 }) {
     final next = pattern.start.firstMatch(input);
-    if (next == null) return false;
+    if (next == null) return level;
 
     final end = pattern.end.firstMatch(input);
-    if (end == null) return false;
+    if (end == null) return level;
 
-    if (pattern.symmetrical) {
-      return next.start == 0;
-    }
-    return next.start < end.start;
+    if (pattern.symmetrical && next.start == 0) return level + 1;
+    return level + (next.start < end.start ? 1 : 0);
   }
 }
 
