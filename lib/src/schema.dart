@@ -1,9 +1,16 @@
-class MarkdownSymbol {
+class MarkdownToken {
   final Match match;
   final int start;
   final int end;
 
-  MarkdownSymbol(this.match, this.start, this.end);
+  MarkdownToken(this.match, this.start, this.end);
+}
+
+class MarkdownMatch {
+  final Match match;
+  final int start;
+
+  MarkdownMatch(this.match, this.start);
 }
 
 class MarkdownDifference {

@@ -12,54 +12,87 @@ class MarkdownPlaceholder {
 
   MarkdownPlaceholder.pattern(String start, MarkdownReplace replace, { String? end })
     : this(MarkdownPattern.string(start, end), replace);
-
-  String apply(String input, { int level = 0 }) {
-    final node = _parse(input, level: level);
-    if (node == null) {
-      final next = pattern.start.firstMatch(input);
-      if (next == null) return input;
-      return input.replaceRange(next.end, null, apply(input.substring(next.end), level: level));
-    }
-
-    final text = node.apply();
-    final end = node.translate(node.end.end);
-
-    return text.replaceRange(end, null, apply(text.substring(end), level: level));
+    
+  String apply(String input) {
+    final nodes = _parseNested(input);
+    if (nodes.isEmpty) return input;
+    return _applyAll(nodes);
   }
 
-  MarkdownNode? _parse(String input, { int level = 0 }) {
+  String _applyAll(List<MarkdownNode> nodes) {
+    String result = '';
+  
+    for (final node in nodes) {
+      final isLast = node == nodes.last;
+      result += node.apply().substring(0, isLast ? null : node.end.end);
+    }
+
+    return result;
+  }
+
+  List<MarkdownNode> _parseNested(String input, [ int level = 0 ]) {
+    final nested = <MarkdownNode>[];
+
+    while (true) {
+      final node = _parse(input, level);
+      if (node == null) break;
+
+      nested.add(node);
+      input = input.substring(node.end.end);
+    }
+
+    return nested;
+  }
+
+  MarkdownNode? _parse(String input, [ int level = 0 ]) {
+    final next = _nextLevel(input, level);
+    if (next < level) return null; 
+
     final start = pattern.start.firstMatch(input);
     if (start == null) return null;
+    
+    final nested = _parseNested(input.substring(start.end), level + 1);
+    final endNested = start.end + _endOfNested(nested);
 
-    if (_nextLevel(input.substring(start.end), level: level) > level) {
-      input = input.replaceRange(start.end, null, apply(input.substring(start.end), level: level + 1));
-    }
+    input = input.replaceRange(start.end, endNested, _applyAll(nested).substring(0, endNested - start.end));
 
-    final end = pattern.end.firstMatch(input.substring(start.end));
+    final end = pattern.end.firstMatch(input.substring(endNested));
     if (end == null) return null;
-
-    if (pattern.symmetrical && start.end == start.end + end.start) {
-      return null;
-    }
 
     return MarkdownNode(
       this,
       input,
-      MarkdownSymbol(start, start.start, start.end),
-      MarkdownSymbol(end, start.end + end.start, start.end + end.end),
-      level
+      MarkdownToken(start, start.start, start.end),
+      MarkdownToken(end, end.start + endNested, end.end + endNested),
+      level,
     );
   }
 
-  int _nextLevel(String input, { int level = 0 }) {
-    final next = pattern.start.firstMatch(input);
-    if (next == null) return level;
-
+  int _endOfNested(List<MarkdownNode> nodes) {
+    int end = 0;
+    for (final node in nodes) {
+      end += node.end.end;
+    }
+    return end;
+  }
+  
+  int _nextLevel(String input, int level) {
+    final start = pattern.start.firstMatch(input);
     final end = pattern.end.firstMatch(input);
-    if (end == null) return level;
 
-    if (pattern.symmetrical && next.start == 0) return level + 1;
-    return level + (next.start < end.start ? 1 : 0);
+    if (pattern.symmetrical) {
+      if (start == null) return level;
+      if (level == 0) return level + 1;
+      return level - 1;
+      if (start.start == 0) return level + 1;
+      return level - 1;
+    }
+
+    if (start == null && end == null) return level;
+    if (start == null) return level - 1;
+    if (end == null) return level + 1;
+    if (start.start < end.start) return level + 1;
+    return level - 1;
   }
 }
 

@@ -3,8 +3,8 @@ import 'package:marked/src/schema.dart';
 
 class MarkdownNode {
   final MarkdownPlaceholder placeholder;
-  final MarkdownSymbol start;
-  final MarkdownSymbol end;
+  final MarkdownToken start;
+  final MarkdownToken end;
   final String input;
   final int level;
 
