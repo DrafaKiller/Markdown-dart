@@ -89,8 +89,6 @@ markdown.apply('Hello, **World**!', { 'bold' });
 
 ## Escaping
 
-**<t  est ** tt>**
-
 You can set an escape pattern to prevent placeholders from being applied.
 To disable escaping, set the `escape` to an empty string.
 

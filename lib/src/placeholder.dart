@@ -1,118 +1,72 @@
-/// ## Markdown Placeholder
-/// 
-/// Placeholders are modular elements that can be used to create a Markdown syntax.
-/// They are used to replace a specific part of the text that matches a pattern.
-/// 
-/// ```dart
-/// MarkdownPlaceholder(RegExp(r'\*\*(.*?)\*\*'), (text, match) => '<b>$text</b>');
-/// ```
-/// 
-/// ### Alternatives
-/// 
-/// To make it easier to create placeholders, there are some predefined methods:
-/// 
-/// ```dart
-/// MarkdownPlaceholder.enclosed('**', (text, match) => '<b>$text</b>');
-/// // Hello **World**! -> Hello <b>World</b>!
-/// 
-/// MarkdownPlaceholder.tag('strong', (text, match) => '<b>$text</b>');
-/// // Hello <strong>World</strong>! -> Hello <b>World</b>!
-/// 
-/// MarkdownPlaceholder.regexp(r'\*\*(.*?)\*\*', (text, match) => '<b>$text</b>');
-/// // Hello **World**! -> Hello <b>World</b>!
-/// ```
-/// 
-/// ### Naming
-/// 
-/// When creating a placeholder, you can attribute a name to it. This allows you to specify which placeholder to apply.
-/// ```dart
-/// ... ({
-///   MarkdownPlaceholder(name: 'bold', ... );
-/// });
-/// 
-/// markdown.apply('Hello, **World**!', { 'bold' });
-/// ```
+import 'package:marked/src/error.dart';
+import 'package:marked/src/node.dart';
+import 'package:marked/src/pattern.dart';
+import 'package:marked/src/symbol.dart';
+
 class MarkdownPlaceholder {
-  final String? name;
-  final RegExp pattern;
+  final MarkdownPattern pattern;
   final MarkdownReplace replace;
 
-  MarkdownPlaceholder(this.pattern, this.replace, { this.name });
-/// Apply the placeholder to the text.<br>
-  /// Replace all the matches with the result of the `replace` function.
-  /// 
-  /// Returns the parsed result text.
-  String apply(String text, { Set<int> ignoreCharacters = const {} }) =>
-    text.replaceAllMapped(pattern, (match) {
-      
-      if (ignoreCharacters.contains(match.start)) return match.group(0)!;
-      return replace(match.group(1) ?? '', match);
-    });
+  MarkdownPlaceholder(this.pattern, this.replace);
 
-  /// Returns whether the placeholder matches the given text.
-  bool matches(String text) => pattern.hasMatch(text);
+  MarkdownPlaceholder.pattern(String start, MarkdownReplace replace, { String? end })
+    : this(MarkdownPattern.string(start, end), replace);
 
-  /* -= Alternatives =- */
+  String apply(String input, { int level = 0 }) {
+    final node = _parse(input, level: level);
+    if (node == null) {
+      final next = pattern.start.firstMatch(input);
+      if (next == null) return input;
+      return input.replaceRange(next.end, null, apply(input.substring(next.end), level: level));
+    }
 
-  /// Create a placeholder that matches the given RegExp pattern.
-  /// 
-  /// ```dart
-  /// MarkdownPlaceholder.regexp(r'\*\*(.*?)\*\*', (text, match) => '<b>$text</b>');
-  /// // Hello **World**! -> Hello <b>World</b>!
-  /// ```
-  factory MarkdownPlaceholder.regexp(String pattern, MarkdownReplace replace, { String? name }) {
-    return MarkdownPlaceholder(
-      name: name,
-      RegExp(pattern),
-      replace
+    final text = node.apply();
+    final difference = input.length - text.length;
+
+    if (pattern.symmetrical && level > 0) {
+      final post = pattern.end.firstMatch(input.substring(node.end.end));
+      if (post != null) return text;
+    }
+
+    return text.replaceRange(node.end.end - difference, null, apply(text.substring(node.end.end - difference), level: level));
+  }
+
+  MarkdownNode? _parse(String input, { int level = 0 }) {
+    final start = pattern.start.firstMatch(input);
+    if (start == null) return null;
+    final preEnd = pattern.end.firstMatch(input.substring(start.end));
+    if (preEnd == null) return null;
+
+    if (_isNextNested(input.substring(start.end), level: level)) {
+      input = input.replaceRange(start.end, null, apply(input.substring(start.end), level: level + 1));
+    }
+    
+    final end = pattern.end.firstMatch(input.substring(start.end));
+    if (end == null) return null;
+
+    return MarkdownNode(
+      this,
+      input,
+      MarkdownSymbol(start, start.start, start.end),
+      MarkdownSymbol(end, start.end + end.start, start.end + end.end),
+      level
     );
   }
 
-  /// Create a placeholder that matches the given enclosed pattern.
-  /// 
-  /// Enclosed patterns are defined by a start and end pattern.
-  /// 
-  /// ```dart
-  /// MarkdownPlaceholder.enclosed('**', (text, match) => '<b>$text</b>');
-  /// // Hello **World**! -> Hello <b>World</b>!
-  /// ```
-  factory MarkdownPlaceholder.enclosed(String start, MarkdownReplace replace, { String? name, String? end }) {
-    final mono = 
-      (start == end || end == null) && start.split('').toSet().length == 1
-      ? RegExp.escape(start.split('').toSet().first)
-      : null;
+  bool _isNextNested(String input, { int level = 0 }) {
+    final next = pattern.start.firstMatch(input);
+    if (next == null) return false;
 
-    start = RegExp.escape(start);
-    end = end != null ? RegExp.escape(end) : start;
+    final end = pattern.end.firstMatch(input);
+    if (end == null) return false;
 
-    final temp = r'(?<=(?<!\\)(\\\\)*)';
-
-    return MarkdownPlaceholder.regexp(
-      name: name,
-      mono != null
-        ? '$start(.+?)$end'
-        : '$temp$start(?!$start)(.+?)$temp$end',
-      replace
-    );
-  }
-
-  /// Create a placeholder that matches the given tag, HTML-like.
-  /// 
-  /// ```dart
-  /// MarkdownPlaceholder.tag('strong', (text, match) => '<b>$text</b>');
-  /// // Hello <strong>World</strong>! -> Hello <b>World</b>!
-  /// ```
-  factory MarkdownPlaceholder.tag(String tag, MarkdownReplace replace, { String? name }) {
-    return MarkdownPlaceholder.enclosed(
-      name: name,
-      '<$tag>',
-      end: '</$tag>',
-      replace
-    );
+    if (pattern.symmetrical) {
+      return next.start == 0;
+    }
+    return next.start < end.start;
   }
 }
 
 /* -= Type Aliases =- */
 
-typedef MarkdownReplace = String Function(String text, Match match);
-typedef MarkdownEncode = String Function(String text);
+typedef MarkdownReplace = String Function(String text, MarkdownNode match);
