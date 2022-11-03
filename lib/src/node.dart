@@ -3,20 +3,25 @@ import 'package:marked/src/schema.dart';
 
 class MarkdownNode {
   final MarkdownPlaceholder placeholder;
-  final MarkdownToken start;
-  final MarkdownToken end;
+  final MarkdownToken open;
+  final MarkdownToken close;
   final String input;
   final int level;
 
   String? _cachedApply;
 
-  String get text => input.substring(start.end, end.start);
+  String get text => input.substring(open.end, close.start);
 
-  MarkdownNode(this.placeholder, this.input, this.start, this.end, this.level);
+  MarkdownNode(this.placeholder, {
+    required this.input,
+    required this.open,
+    required this.close,
+    required this.level
+  });
 
   String apply() {
     if (_cachedApply != null) return _cachedApply!;
-    _cachedApply = input.replaceRange(start.start, end.end, placeholder.replace(text, this));
+    _cachedApply = input.replaceRange(open.start, close.end, placeholder.replace(placeholder.apply(text), this));
     return _cachedApply!;
   }
 
@@ -26,15 +31,25 @@ class MarkdownNode {
 
   MarkdownNode clone({
     MarkdownPlaceholder? placeholder,
-    MarkdownToken? start,
-    MarkdownToken? end,
+    MarkdownToken? open,
+    MarkdownToken? close,
     String? input,
     int? level,
   }) => MarkdownNode(
       placeholder ?? this.placeholder,
-      input ?? this.input,
-      start ?? this.start,
-      end ?? this.end,
-      level ?? this.level,
+      input: input ?? this.input,
+      open: open ?? this.open,
+      close: close ?? this.close,
+      level: level ?? this.level,
     );
+
+  static int endOfAll(List<MarkdownNode> nodes, { bool translated = false }) {
+    int index = 0;
+    for (final node in nodes) {
+      index += translated
+        ? node.translate(node.close.end)
+        : node.close.end;
+    }
+    return index;
+  }
 }

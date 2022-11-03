@@ -15,121 +15,120 @@ class MarkdownPlaceholder {
     : this(MarkdownPattern.string(start, end), replace);
     
   String apply(String input) {
-    final nodes = _parseNested(input);
+    final nodes = _parseAll(input);
     if (nodes.isEmpty) return input;
-    return _applyAll(nodes, keepEnd: true);
-  }
 
-  String _applyAll(List<MarkdownNode> nodes, { bool keepEnd = false }) {
-    String result = '';
-  
-    for (final node in nodes) {
-      final isLast = node == nodes.last;
-      result += node.apply().substring(0, isLast && keepEnd ? null : node.translate(node.end.end));
-    }
+    if (strict) {
+      final endIndex = MarkdownNode.endOfAll(nodes);
+      if (_nextLevel(input.substring(endIndex)) < 0) {
+        final end = pattern.end.firstMatch(input.substring(endIndex))!;
 
-    return result;
-  }
-
-  List<MarkdownNode> _parseNested(String input, [ int level = 0 ]) {
-    final nested = <MarkdownNode>[];
-    final original = input;
-
-    while (true) {
-      final node = _parse(input, level);
-      if (node == null) break;
-
-      nested.add(node);
-      input = node.apply().substring(node.translate(node.end.end));
-    }
-
-    if (strict && level == 0) {
-      final end = pattern.end.firstMatch(input);
-      if (end != null) {
         throw MarkdownMissingTokenError(
           pattern,
-          input: original,
-          index: end.start + original.length - input.length,
+          input: input,
+          index: endIndex + end.start,
           length: end.end - end.start,
           ending: false,
         );
       }
     }
 
-    return nested;
+    return _applyAll(nodes);
+  }
+
+  String _applyAll(List<MarkdownNode> nodes) {
+    String result = '';
+
+    for (final node in nodes) {
+      final isLast = node == nodes.last;
+      result += node.apply().substring(0, isLast ? null : node.translate(node.close.end));
+    }
+
+    return result;
   }
 
   MarkdownNode? _parse(String input, [ int level = 0 ]) {
-    final next = _nextLevel(input, level);
-    if (next < level) return null;
-
     final start = pattern.start.firstMatch(input);
     if (start == null) return null;
 
-    final nested = _parseNested(input.substring(start.end), level + 1);
-    int startEnd = start.end;
-
-    final original = input;
-    if (nested.isNotEmpty) {
-      input = input.replaceRange(startEnd, null, _applyAll(nested, keepEnd: true));
-      startEnd += _endOfNested(nested, translated: true);
-    }
-    
-    final end = pattern.end.firstMatch(input.substring(startEnd));
+    final end = _findEnd(input.substring(start.end), level);
     if (end == null) {
       if (strict) {
         throw MarkdownMissingTokenError(
           pattern,
-          input: original,
+          input: input,
           index: start.start,
           length: start.end - start.start,
           ending: true,
         );
       }
-      
-      if (nested.isEmpty) return null;
-      final node = nested.first;
+
+      final node = _parse(input.substring(start.end), level + 1);
+      if (node == null) return null;
+
       return node.clone(
-        input: original,
-        start: MarkdownToken(node.start.match, node.start.start + start.end, node.start.end + start.end),
-        end: MarkdownToken(node.end.match, node.end.start + start.end, node.end.end + start.end),
+        input: input,
+        open: MarkdownToken(node.open.match, node.open.start + start.end, node.open.end + start.end),
+        close: MarkdownToken(node.close.match, node.close.start + start.end, node.close.end + start.end),
       );
     }
 
     return MarkdownNode(
       this,
-      input,
-      MarkdownToken(start, start.start, start.end),
-      MarkdownToken(end, end.start + startEnd, end.end + startEnd),
-      level,
+      input: input,
+      open: MarkdownToken(start, start.start, start.end),
+      close: MarkdownToken(end.match, start.end + end.start + end.match.start, start.end + end.start + end.match.end),
+      level: level,
     );
   }
 
-  int _endOfNested(List<MarkdownNode> nodes, { bool translated = false }) {
-    int end = 0;
-    for (final node in nodes) {
-      end += translated
-        ? node.translate(node.end.end)
-        : node.end.end;
+  List<MarkdownNode> _parseAll(String input, [ int level = 0 ]) {
+    final nested = <MarkdownNode>[];
+    while (true) {
+      final node = _parse(input, level);
+      if (node == null) break;
+      nested.add(node);
+      input = input.substring(node.close.end);
     }
-    return end;
+    return nested;
   }
   
-  int _nextLevel(String input, int level) {
+  int _nextLevel(String input, [ int level = 0 ]) {
     final start = pattern.start.firstMatch(input);
     final end = pattern.end.firstMatch(input);
 
     if (pattern.symmetrical) {
       if (start == null) return level;
-      if (level == 0 || start.start == 0) return level + 1;
+      if (start.start == 0) return level + 1;
       return level - 1;
     }
 
     if (start == null && end == null) return level;
     if (start == null) return level - 1;
     if (end == null) return level + 1;
-    if (start.start < end.start) return level + 1;
+    if (start.start <= end.start) return level + 1;
     return level - 1;
+  }
+
+  MarkdownMatch? _findEnd(String input, [ int level = 0 ]) {
+    final next = _nextLevel(input, level);
+
+    if (next == level) return null;
+    if (next < level) {
+      final end = pattern.end.firstMatch(input);
+      if (end == null) return null;
+      
+      return MarkdownMatch(end, 0);
+    }
+
+    final start = pattern.start.firstMatch(input)!;
+    final nextEnd = _findEnd(input.substring(start.end), level + 1);
+    if (nextEnd == null) return null;
+
+    final end = _findEnd(input.substring(start.end + nextEnd.start + nextEnd.match.end), level);
+    if (end == null) return null;
+
+    return MarkdownMatch(end.match, end.start + start.end + nextEnd.start + nextEnd.match.end);
   }
 }
 
