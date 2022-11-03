@@ -1,15 +1,22 @@
 import 'package:marked/src/pattern.dart';
 
-class MarkdownExpectedEndError extends Error {
+class MarkdownMissingTokenError extends Error {
   final MarkdownPattern pattern;
   final int index;
+  final int length;
   final String input;
+  final bool? ending;
 
-  MarkdownExpectedEndError(this.pattern, this.index, this.input);
+  MarkdownMissingTokenError(this.pattern, {
+    required this.input,
+    required this.index,
+    required this.length,
+    this.ending
+  });
 
   @override
   String toString() => '''
-Expected end token matching expression "${pattern.end.pattern}", to end token at $index
+Missing${ ending == null ? '' : (ending! ? ' end' : ' start') } token to match '${ input.substring(index, index + length) }' at index $index.
   ${'${ ' ' * 10 }$input${ ' ' * 10 }'.substring(index, index + 20)}
-            ^''';
+            ^${ '^' * (length - 1) }''';
 }

@@ -23,4 +23,18 @@ class MarkdownNode {
   int translate(int index) {
     return apply().length - input.length + index;
   }
+
+  MarkdownNode clone({
+    MarkdownPlaceholder? placeholder,
+    MarkdownToken? start,
+    MarkdownToken? end,
+    String? input,
+    int? level,
+  }) => MarkdownNode(
+      placeholder ?? this.placeholder,
+      input ?? this.input,
+      start ?? this.start,
+      end ?? this.end,
+      level ?? this.level,
+    );
 }

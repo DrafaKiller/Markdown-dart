@@ -1,5 +1,5 @@
-import 'dart:math' as math;
 
+import 'package:marked/src/error.dart';
 import 'package:marked/src/node.dart';
 import 'package:marked/src/pattern.dart';
 import 'package:marked/src/schema.dart';
@@ -7,8 +7,9 @@ import 'package:marked/src/schema.dart';
 class MarkdownPlaceholder {
   final MarkdownPattern pattern;
   final MarkdownReplace replace;
+  final bool strict;
 
-  MarkdownPlaceholder(this.pattern, this.replace);
+  MarkdownPlaceholder(this.pattern, this.replace, { this.strict = false });
 
   MarkdownPlaceholder.pattern(String start, MarkdownReplace replace, { String? end })
     : this(MarkdownPattern.string(start, end), replace);
@@ -16,15 +17,15 @@ class MarkdownPlaceholder {
   String apply(String input) {
     final nodes = _parseNested(input);
     if (nodes.isEmpty) return input;
-    return _applyAll(nodes);
+    return _applyAll(nodes, keepEnd: true);
   }
 
-  String _applyAll(List<MarkdownNode> nodes) {
+  String _applyAll(List<MarkdownNode> nodes, { bool keepEnd = false }) {
     String result = '';
   
     for (final node in nodes) {
       final isLast = node == nodes.last;
-      result += node.apply().substring(0, isLast ? null : node.end.end);
+      result += node.apply().substring(0, isLast && keepEnd ? null : node.translate(node.end.end));
     }
 
     return result;
@@ -32,13 +33,27 @@ class MarkdownPlaceholder {
 
   List<MarkdownNode> _parseNested(String input, [ int level = 0 ]) {
     final nested = <MarkdownNode>[];
+    final original = input;
 
     while (true) {
       final node = _parse(input, level);
       if (node == null) break;
 
       nested.add(node);
-      input = input.substring(node.end.end);
+      input = node.apply().substring(node.translate(node.end.end));
+    }
+
+    if (strict && level == 0) {
+      final end = pattern.end.firstMatch(input);
+      if (end != null) {
+        throw MarkdownMissingTokenError(
+          pattern,
+          input: original,
+          index: end.start + original.length - input.length,
+          length: end.end - end.start,
+          ending: false,
+        );
+      }
     }
 
     return nested;
@@ -46,32 +61,56 @@ class MarkdownPlaceholder {
 
   MarkdownNode? _parse(String input, [ int level = 0 ]) {
     final next = _nextLevel(input, level);
-    if (next < level) return null; 
+    if (next < level) return null;
 
     final start = pattern.start.firstMatch(input);
     if (start == null) return null;
-    
+
     final nested = _parseNested(input.substring(start.end), level + 1);
-    final endNested = start.end + _endOfNested(nested);
+    int startEnd = start.end;
 
-    input = input.replaceRange(start.end, endNested, _applyAll(nested).substring(0, endNested - start.end));
-
-    final end = pattern.end.firstMatch(input.substring(endNested));
-    if (end == null) return null;
+    final original = input;
+    if (nested.isNotEmpty) {
+      input = input.replaceRange(startEnd, null, _applyAll(nested, keepEnd: true));
+      startEnd += _endOfNested(nested, translated: true);
+    }
+    
+    final end = pattern.end.firstMatch(input.substring(startEnd));
+    if (end == null) {
+      if (strict) {
+        throw MarkdownMissingTokenError(
+          pattern,
+          input: original,
+          index: start.start,
+          length: start.end - start.start,
+          ending: true,
+        );
+      }
+      
+      if (nested.isEmpty) return null;
+      final node = nested.first;
+      return node.clone(
+        input: original,
+        start: MarkdownToken(node.start.match, node.start.start + start.end, node.start.end + start.end),
+        end: MarkdownToken(node.end.match, node.end.start + start.end, node.end.end + start.end),
+      );
+    }
 
     return MarkdownNode(
       this,
       input,
       MarkdownToken(start, start.start, start.end),
-      MarkdownToken(end, end.start + endNested, end.end + endNested),
+      MarkdownToken(end, end.start + startEnd, end.end + startEnd),
       level,
     );
   }
 
-  int _endOfNested(List<MarkdownNode> nodes) {
+  int _endOfNested(List<MarkdownNode> nodes, { bool translated = false }) {
     int end = 0;
     for (final node in nodes) {
-      end += node.end.end;
+      end += translated
+        ? node.translate(node.end.end)
+        : node.end.end;
     }
     return end;
   }
@@ -82,9 +121,7 @@ class MarkdownPlaceholder {
 
     if (pattern.symmetrical) {
       if (start == null) return level;
-      if (level == 0) return level + 1;
-      return level - 1;
-      if (start.start == 0) return level + 1;
+      if (level == 0 || start.start == 0) return level + 1;
       return level - 1;
     }
 
