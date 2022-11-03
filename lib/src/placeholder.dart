@@ -1,8 +1,9 @@
-
 import 'package:marked/src/error.dart';
 import 'package:marked/src/node.dart';
 import 'package:marked/src/pattern.dart';
 import 'package:marked/src/schema.dart';
+
+export 'package:marked/src/pattern.dart';
 
 class MarkdownPlaceholder {
   final MarkdownPattern pattern;
@@ -10,9 +11,6 @@ class MarkdownPlaceholder {
   final bool strict;
 
   MarkdownPlaceholder(this.pattern, this.replace, { this.strict = false });
-
-  MarkdownPlaceholder.pattern(String start, MarkdownReplace replace, { String? end })
-    : this(MarkdownPattern.string(start, end), replace);
     
   String apply(String input) {
     final nodes = _parseAll(input);
@@ -129,6 +127,16 @@ class MarkdownPlaceholder {
     if (end == null) return null;
 
     return MarkdownMatch(end.match, end.start + start.end + nextEnd.start + nextEnd.match.end);
+  }
+
+  /* -= Alternatives =- */
+
+  factory MarkdownPlaceholder.enclosed(String start, MarkdownReplace replace, { String? end }) {
+    return MarkdownPlaceholder(
+      MarkdownPattern.string(start, end ?? start),
+      (node) => replace(node),
+      strict: true,
+    );
   }
 }
 

@@ -10,7 +10,10 @@ class MarkdownNode {
 
   String? _cachedApply;
 
-  String get text => input.substring(open.end, close.start);
+  String get text =>
+    placeholder.pattern.singleToken
+      ? (open.match.groupCount > 0 ? open.match.group(1)! : '')
+      : input.substring(open.end, close.start);
 
   MarkdownNode(this.placeholder, {
     required this.input,
