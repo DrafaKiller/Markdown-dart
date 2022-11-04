@@ -39,7 +39,7 @@ class MarkdownPlaceholder {
 
     for (final node in nodes) {
       final isLast = node == nodes.last;
-      result += node.apply().substring(0, isLast ? null : node.translate(node.close.end));
+      result += node.apply().substring(0, isLast ? null : node.translate(node.end.end));
     }
 
     return result;
@@ -66,16 +66,16 @@ class MarkdownPlaceholder {
 
       return node.clone(
         input: input,
-        open: MarkdownToken(node.open.match, node.open.start + start.end, node.open.end + start.end),
-        close: MarkdownToken(node.close.match, node.close.start + start.end, node.close.end + start.end),
+        start: MarkdownToken(node.start.match, node.start.start + start.end, node.start.end + start.end),
+        end: MarkdownToken(node.end.match, node.end.start + start.end, node.end.end + start.end),
       );
     }
 
     return MarkdownNode(
       this,
       input: input,
-      open: MarkdownToken(start, start.start, start.end),
-      close: MarkdownToken(end.match, start.end + end.start + end.match.start, start.end + end.start + end.match.end),
+      start: MarkdownToken(start, start.start, start.end),
+      end: MarkdownToken(end.match, start.end + end.start + end.match.start, start.end + end.start + end.match.end),
       level: level,
     );
   }
@@ -86,7 +86,7 @@ class MarkdownPlaceholder {
       final node = _parse(input, level);
       if (node == null) break;
       nested.add(node);
-      input = input.substring(node.close.end);
+      input = input.substring(node.end.end);
     }
     return nested;
   }
@@ -104,7 +104,7 @@ class MarkdownPlaceholder {
     if (start == null && end == null) return level;
     if (start == null) return level - 1;
     if (end == null) return level + 1;
-    if (start.start <= end.start) return level + 1;
+    if (start.start < end.start) return level + 1;
     return level - 1;
   }
 
@@ -131,11 +131,27 @@ class MarkdownPlaceholder {
 
   /* -= Alternatives =- */
 
-  factory MarkdownPlaceholder.enclosed(String start, MarkdownReplace replace, { String? end }) {
+  factory MarkdownPlaceholder.enclosed(String start, MarkdownReplace replace, { String? end, bool strict = false }) {
     return MarkdownPlaceholder(
-      MarkdownPattern.string(start, end ?? start),
-      (node) => replace(node),
-      strict: true,
+      MarkdownPattern.enclosed(start, end),
+      replace,
+      strict: strict,
+    );
+  }
+
+  factory MarkdownPlaceholder.regexp(String start, MarkdownReplace replace, { String? end, bool strict = false }) {
+    return MarkdownPlaceholder(
+      MarkdownPattern.regexp(start, end),
+      replace,
+      strict: strict,
+    );
+  }
+
+  factory MarkdownPlaceholder.tag(String start, MarkdownReplace replace, { String? end, Set<String> properties = const {}, bool strict = false }) {
+    return MarkdownPlaceholder(
+      MarkdownPattern.tag(start, end, properties),
+      replace,
+      strict: strict,
     );
   }
 }

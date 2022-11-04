@@ -1,11 +1,15 @@
 import 'package:marked/marked.dart';
-import 'package:marked/src/pattern.dart';
 
-final markdown = Markdown({
-  // MarkdownPlaceholder(MarkdownPattern(RegExp(r'(?:\*(?=\S)|(?<=\S)\*)')), (text, match) => '<=$text=>'),
-  MarkdownPlaceholder(MarkdownPattern(RegExp(r'\*')), (text, match) => '<=$text=>'),
+final markdown = Markdown.map({
+  '[**]': (text, match) => '<b>$text</b>',
+  '[*]': (text, match) => '<i>$text</i>',
+  '[~~]': (text, match) => '<s>$text</s>',
+  '<test p1|p2|p3>': (text, match) {
+    print(match.tagProperties);
+    return '<b>$text</b>';
+  },
 });
 
 void main() {
-  print(markdown.apply('Hello *okay* !'));
+  print(markdown.apply('Hello <test p1="test" p2="test2" p3>nice</test>!'));
 }

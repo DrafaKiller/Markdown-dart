@@ -3,8 +3,8 @@ import 'package:marked/src/schema.dart';
 
 class MarkdownNode {
   final MarkdownPlaceholder placeholder;
-  final MarkdownToken open;
-  final MarkdownToken close;
+  final MarkdownToken start;
+  final MarkdownToken end;
   final String input;
   final int level;
 
@@ -12,19 +12,24 @@ class MarkdownNode {
 
   String get text =>
     placeholder.pattern.singleToken
-      ? (open.match.groupCount > 0 ? open.match.group(1)! : '')
-      : input.substring(open.end, close.start);
+      ? (start.match.groupCount > 0 ? start.match.group(1)! : '')
+      : input.substring(start.end, end.start);
+
+  String get startText => start.match.group(0)!;
+  String get endText => end.match.group(0)!;
+
+  Map<String, String> get tagProperties => MarkdownPattern.getPropertiesOfTag(startText);
 
   MarkdownNode(this.placeholder, {
     required this.input,
-    required this.open,
-    required this.close,
+    required this.start,
+    required this.end,
     required this.level
   });
 
   String apply() {
     if (_cachedApply != null) return _cachedApply!;
-    _cachedApply = input.replaceRange(open.start, close.end, placeholder.replace(placeholder.apply(text), this));
+    _cachedApply = input.replaceRange(start.start, end.end, placeholder.replace(placeholder.apply(text), this));
     return _cachedApply!;
   }
 
@@ -34,15 +39,15 @@ class MarkdownNode {
 
   MarkdownNode clone({
     MarkdownPlaceholder? placeholder,
-    MarkdownToken? open,
-    MarkdownToken? close,
+    MarkdownToken? start,
+    MarkdownToken? end,
     String? input,
     int? level,
   }) => MarkdownNode(
       placeholder ?? this.placeholder,
       input: input ?? this.input,
-      open: open ?? this.open,
-      close: close ?? this.close,
+      start: start ?? this.start,
+      end: end ?? this.end,
       level: level ?? this.level,
     );
 
@@ -50,8 +55,8 @@ class MarkdownNode {
     int index = 0;
     for (final node in nodes) {
       index += translated
-        ? node.translate(node.close.end)
-        : node.close.end;
+        ? node.translate(node.end.end)
+        : node.end.end;
     }
     return index;
   }
