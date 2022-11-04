@@ -29,7 +29,7 @@ class MarkdownNode {
 
   String apply() {
     if (_cachedApply != null) return _cachedApply!;
-    _cachedApply = input.replaceRange(start.start, end.end, placeholder.replace(placeholder.apply(text), this));
+    _cachedApply = input.replaceRange(start.start, end.end, placeholder.replace(placeholder.apply(text, level), this));
     return _cachedApply!;
   }
 
