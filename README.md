@@ -3,15 +3,15 @@
 
 # Markdown
 
-A simple Markdown parser for Dart.<br>
+A simple-setup Markdown syntax parser for Dart.
 Create your own custom Markdown syntax.
 
 ## Features
 
-* Attach placeholder replacements to your Markdown syntax
-* Simple to create and setup a Markdown syntax
-* Easily improvable and extendable, with better organization
-* Generalized for most use cases
+* Simple Markdown syntax setup
+* Generic Markdown-base for any use-case
+* Apply the Markdown to any text
+* Attach placeholders to modify the input
 
 ## Getting started
 
@@ -37,9 +37,7 @@ import 'package:marked/marked.dart';
 final markdown = Markdown.map({
   '**': (text, match) => '<b>$text</b>',
   '*': (text, match) => '<i>$text</i>',
-  '~~': (text, match) => '<strike>$text</strike>',
   '__': (text, match) => '<u>$text</u>',
-  '`': (text, match) => '<code>$text</code>',
 });
 
 void main() {

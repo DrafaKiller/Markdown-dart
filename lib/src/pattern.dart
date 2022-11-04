@@ -1,5 +1,3 @@
-import 'package:marked/src/node.dart';
-
 class MarkdownPattern {
   final RegExp start;
   final RegExp end;

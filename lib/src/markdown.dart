@@ -1,5 +1,4 @@
 import 'package:marked/marked.dart';
-import 'package:marked/src/node.dart';
 import 'package:marked/src/placeholder.dart';
 
 class Markdown {
