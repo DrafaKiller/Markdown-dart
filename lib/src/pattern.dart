@@ -1,3 +1,5 @@
+import 'package:marked/src/schema.dart';
+
 class MarkdownPattern {
   final RegExp start;
   final RegExp end;
@@ -15,6 +17,44 @@ class MarkdownPattern {
   /// This most likely means the token is basic in nature, or it handles the replacing itself.
   bool get singleToken => end.pattern.isEmpty;
 
+  int? nextLevel(String input, [ int level = 0 ]) {
+    final start = this.start.firstMatch(input);
+    final end = this.end.firstMatch(input);
+    
+    if (symmetrical) {
+      if (end == null) return null;
+      if (level == 0) return level + 1;
+      if (end.start == 0) return level;
+      return level - 1;
+    }
+
+    if (start == null && end == null) return null;
+    if (start == null) return level - 1;
+    if (end == null) return level + 1;
+    if (start.start < end.start) return level + 1;
+    return level - 1;
+  }
+
+  MarkdownMatch? findEnd(String input, { int level = 1, int offset = 0, bool isIncreasing = true }) {
+    final next = nextLevel(input, level);
+
+    if (next == null) return null;
+    if (next < level || (next == level && !isIncreasing)) {
+      final end = this.end.firstMatch(input);
+      if (end == null) return null;
+      return MarkdownMatch(end, offset);
+    }
+
+    final start = this.start.firstMatch(input)!;
+    final nextEnd = findEnd(input.substring(start.end), level: level + 1, offset: offset + start.end, isIncreasing: true);
+    if (nextEnd == null) return null;
+
+    final lastEnd = findEnd(input.substring(nextEnd.end - offset), level: level, offset: nextEnd.end, isIncreasing: false);
+    if (lastEnd == null) return null;
+
+    return lastEnd;
+  }
+
   /* -= Alternatives =- */
 
   /// ### RegExp Pattern
@@ -23,7 +63,6 @@ class MarkdownPattern {
   factory MarkdownPattern.regexp(String start, [ String? end ]) =>
     MarkdownPattern(RegExp(start), end == null ? null : RegExp(end));
 
-  // String / Text
   /// ### String/Normal Pattern
   /// 
   /// Basic pattern, matches an input enclosed by the escaped start and end tokens.
@@ -33,7 +72,6 @@ class MarkdownPattern {
       end == null ? null : RegExp.escape(end)
     );
 
-  // Enclosed
   /// ### Enclosed Pattern
   /// 
   /// Matches an input enclosed by start and end token.
@@ -43,17 +81,26 @@ class MarkdownPattern {
   /// **Example:**
   /// - `('<', '>')` matches `<text>`
   /// - `('*'[, '*'])` matches `*text*`
-  /// 
-  /// **Note:**<br>
-  /// Unique character patterns can be unpredictable as the start and end token are identical.
-  /// 
-  /// The token `*` on `**text**` would apply as `<i>*text</i>*`, so it's ensured that
-  /// it doesn't repeat by only applying it to the inner match `*<i>text</i>*`.
   factory MarkdownPattern.enclosed(String start, [ String? end ]) =>
-    MarkdownPattern.regexp(
-      assistUniqueCharacter(start),
-      assistUniqueCharacter(end ?? start, true),
-    );
+    MarkdownPattern.string(start, end ?? start);
+
+  /// ### Symmetrical Pattern
+  /// 
+  /// 
+  factory MarkdownPattern.symmetrical(String start, { bool nested = true, bool sticky = false }) {
+    String end = start;
+    if (!nested || sticky) {
+      start = assistUniqueCharacter(start);
+      end = assistUniqueCharacter(end, true);
+    }
+
+    if (sticky) {
+      start = '$start(?=\\S)';
+      end = '(?<=\\S)$end';
+    }
+
+    return MarkdownPattern.enclosed(start, start);
+  }
 
   static _isUniqueCharacter(String input) => input.split('').toSet().length == 1;
 
@@ -64,7 +111,6 @@ class MarkdownPattern {
       : '(?<!${ RegExp.escape(input[0]) })${ RegExp.escape(input) }';
   }
 
-  // Tag
   factory MarkdownPattern.tag(String start, [ String? end, Set<String> properties = const {} ]) {
     start = RegExp.escape(start)
       .replaceAll(r'\.\.\.', r'.+?')

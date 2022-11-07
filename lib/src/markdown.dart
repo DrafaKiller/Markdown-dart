@@ -122,11 +122,7 @@ class Markdown {
                 break;
 
               case 'sticky':
-                return MarkdownPlaceholder.regexp(
-                  '${ MarkdownPattern.assistUniqueCharacter(pattern) }(?=\\S)',
-                  end: '(?<=\\S)${ MarkdownPattern.assistUniqueCharacter(pattern, true) }',
-                  replace
-                );
+                return MarkdownPlaceholder.symmetrical(pattern, replace, sticky: true);
 
               case 'split':
                 final splitMatch = _splitPattern.firstMatch(pattern);

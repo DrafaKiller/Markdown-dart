@@ -7,10 +7,13 @@ class MarkdownToken {
 }
 
 class MarkdownMatch {
-  final Match match;
-  final int start;
+  final Match token;
+  final int offset;
 
-  MarkdownMatch(this.match, this.start);
+  MarkdownMatch(this.token, this.offset);
+
+  int get start => token.start + offset;
+  int get end => token.end + offset;
 }
 
 class MarkdownDifference {
