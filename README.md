@@ -85,33 +85,37 @@ When creating a placeholder, you can attribute a name to it. This allows you to 
 markdown.apply('Hello, **World**!', { 'bold' });
 ```
 
-## Escaping
+## ~~Escaping~~ (Not implemented yet)
 
-You can set an escape pattern to prevent placeholders from being applied.
-To disable escaping, set the `escape` to an empty string.
+...
 
-You may also escape the escape by repeating it twice, although you will only need to escape the ones before placeholders.
+<!--
+  You can set an escape pattern to prevent placeholders from being applied.
+  To disable escaping, set the `escape` to an empty string.
 
-When escaping a block of placeholders, it will block all placeholders directly in front of it.
+  You may also escape the escape by repeating it twice, although you will only need to escape the ones before placeholders.
 
-By default, the escape pattern is set to `\`.
+  When escaping a block of placeholders, it will block all placeholders directly in front of it.
 
-```dart
-final markdown = Markdown.map({ ... }, escape: r'\');
+  By default, the escape pattern is set to `\`.
 
-print(
-  markdown.apply(r'''
-    Hello **World**!
-    Hello \**World**!
-    Hello \\**World**!
-  ''')
-);
+  ```dart
+  final markdown = Markdown.map({ ... }, escape: r'\');
 
-// Output:
-//   Hello <b>World</b>!
-//   Hello **World**!
-//   Hello \<b>World</b>!
-```
+  print(
+    markdown.apply(r'''
+      Hello **World**!
+      Hello \**World**!
+      Hello \\**World**!
+    ''')
+  );
+
+  // Output:
+  //   Hello <b>World</b>!
+  //   Hello **World**!
+  //   Hello \<b>World</b>!
+  ```
+-->
 
 ## Example
 

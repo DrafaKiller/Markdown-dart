@@ -7,7 +7,7 @@ class MarkdownPattern {
   MarkdownPattern(this.start, [ RegExp? end ]) : this.end = end ?? RegExp('');
 
   /// Whether the pattern is consists only of a single type of character, for example `**`.
-  bool get uniqueCharater => start.pattern.split('').toSet().length == 1;
+  bool get uniqueCharater => isUniqueCharater(start.pattern);
 
   /// Whether the pattern is symmetrical, which means the start and end patterns are identical.
   bool get symmetrical => start.pattern == end.pattern;
@@ -55,6 +55,10 @@ class MarkdownPattern {
     return lastEnd;
   }
 
+  /* -= Static Methods =- */
+
+  static bool isUniqueCharater(String input) => input.split('').toSet().length == 1;
+
   /* -= Alternatives =- */
 
   /// ### RegExp Pattern
@@ -66,6 +70,9 @@ class MarkdownPattern {
   /// ### String/Normal Pattern
   /// 
   /// Basic pattern, matches an input enclosed by the escaped start and end tokens.
+  /// 
+  /// - Tokens are escaped.
+  /// - The end token is not required, for basic replacing.
   factory MarkdownPattern.string(String start, [ String? end ]) =>
     MarkdownPattern.regexp(
       RegExp.escape(start),
@@ -74,9 +81,10 @@ class MarkdownPattern {
 
   /// ### Enclosed Pattern
   /// 
-  /// Matches an input enclosed by start and end token.
+  /// Matches an input enclosed by start and end token, and they are escaped.
   /// 
-  /// Tokens are escaped, and when is unique character is ensured it doesn't repeat.
+  /// Same as **string pattern**, but an end token is always present. <br>
+  /// If not given it will be the same as the start token.
   /// 
   /// **Example:**
   /// - `('<', '>')` matches `<text>`
@@ -86,12 +94,28 @@ class MarkdownPattern {
 
   /// ### Symmetrical Pattern
   /// 
+  /// Matches an input enclosed by the same token.
   /// 
+  /// - The token is escaped.
+  /// - Start and end token are the same, thus symmetrical.
+  /// 
+  /// Options:
+  /// - **sticky** - applies regex to ensure any character to be next to the token.
+  /// - **nested** - when set to *false*, it will only match the first instance of the token from the inside.
+  ///
+  /// **Example:**
+  /// - `('*')` matches `*text*` to `<i>text</i>`
+  /// - `('*', sticky: true)` matches `*text*`, but not `* text *`
+  /// - `('*', nested: false)` matches `**text**` to `*<i>text</i>*`, instead of `<i><i>text</i></i>`
   factory MarkdownPattern.symmetrical(String start, { bool nested = true, bool sticky = false }) {
     String end = start;
+
     if (!nested || sticky) {
       start = assistUniqueCharacter(start);
       end = assistUniqueCharacter(end, true);
+    } else {
+      start = RegExp.escape(start);
+      end = RegExp.escape(end);
     }
 
     if (sticky) {
@@ -99,13 +123,10 @@ class MarkdownPattern {
       end = '(?<=\\S)$end';
     }
 
-    return MarkdownPattern.enclosed(start, start);
+    return MarkdownPattern.regexp(start, end);
   }
 
-  static _isUniqueCharacter(String input) => input.split('').toSet().length == 1;
-
   static assistUniqueCharacter(String input, [ bool end = false ]) {
-    if (!_isUniqueCharacter(input)) return RegExp.escape(input);
     return !end
       ? '${ RegExp.escape(input) }(?!${ RegExp.escape(input[0]) })'
       : '(?<!${ RegExp.escape(input[0]) })${ RegExp.escape(input) }';

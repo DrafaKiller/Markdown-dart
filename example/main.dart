@@ -1,15 +1,15 @@
 import 'package:marked/marked.dart';
 
 final markdown = Markdown.map({
-  '[**]': (text, match) => '<b>$text</b>',
-  '[*]': (text, match) => '<i>$text</i>',
-  '[__]': (text, match) => '<u>$text</u>',
+  '**': (text, match) => '<b>$text</b>',
+  '*': (text, match) => '<i>$text</i>',
+  '__': (text, match) => '<u>$text</u>',
   '<custom>' : (text, match) => '<tag>$text</tag>',
 }, {
   MarkdownPlaceholder.enclosed(
     'from here', end: 'to here',
     (text, match) => '[$text]'
-  )
+  ),
 });
 
 void main() {

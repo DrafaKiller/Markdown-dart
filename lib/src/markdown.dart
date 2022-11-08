@@ -16,7 +16,8 @@ class Markdown {
     return input;
   }
 
-  /// Simplifies the markdown definition by transforming a set of entries into placeholders, given the relating string key.
+  /// Simplifies the markdown definition by transforming a set of entries into placeholders,
+  /// given the relating string key.
   /// 
   /// Usage example, with the following placeholder equivalent:
   /// ```dart
@@ -36,6 +37,9 @@ class Markdown {
   /// 'tag: <custom>': (text, match) => '[$text]'
   /// 'regexp: \*([^*]+)\*': (text, match) => '<b>$text</b>'
   /// ```
+  /// 
+  /// **Note:**
+  /// When using a unique character token, the created placeholders will be symmetrical with no nesting, this is so it's more intuitive. 
   /// 
   /// ### Types of placeholders:
   /// 
@@ -67,7 +71,7 @@ class Markdown {
           .map((entry) {
             String pattern = entry.key;
             final replace = entry.value;
-            final String mode;
+            String mode;
             
             if (pattern.startsWith('normal: ')) {
               mode = 'normal';
@@ -138,6 +142,10 @@ class Markdown {
               case 'enclosed':
               default:
                 break;
+            }
+
+            if (MarkdownPattern.isUniqueCharater(pattern)) {
+              return MarkdownPlaceholder.symmetrical(pattern, replace, nested: false);
             }
 
             return MarkdownPlaceholder.enclosed(pattern, replace);

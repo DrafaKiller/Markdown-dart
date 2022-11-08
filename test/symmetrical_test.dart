@@ -21,8 +21,7 @@ void main() {
 
     test('nested', () {
       expect(markdown.apply('*** a ***'), '<[<[<[ a ]>]>]>');
-      expect(markdown.apply('*** a * b* c*'), '<[<[<[ a ]> b]> c]>');
-      expect(markdown.apply('*** a * b * c *'), '<[<[<[ a ]> b]> c]>');
+      expect(markdown.apply('a *** b *** c'), 'a <[<[<[ b ]>]>]> c');
     });
   });
 }

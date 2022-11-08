@@ -60,14 +60,7 @@ class MarkdownPlaceholder {
     final start = pattern.start.firstMatch(input);
     if (start == null) return null;
 
-    final end = pattern.findEnd(input.substring(start.end), level: level);
-    
-    print('$level: $input');
-    print(input.substring(start.end));
-    if (end?.offset != null) {
-      print('END!!! ${ end!.offset }');
-    }
-    print('');
+    final end = pattern.findEnd(input.substring(start.end), level: level + 1);
 
     if (end != null) {
       return MarkdownNode(
@@ -164,7 +157,7 @@ class MarkdownPlaceholder {
     );
   }
 
-  /// A markdown placeholder with a [symmetrical pattern](https://pub.dev/documentation/marked/latest/marked/MarkdownPattern/MarkdownPattern.symm.html).
+  /// A markdown placeholder with a [symmetrical pattern](https://pub.dev/documentation/marked/latest/marked/MarkdownPattern/MarkdownPattern.symmetrical.html).
   factory MarkdownPlaceholder.symmetrical(
     String start,
     MarkdownReplace replace,
