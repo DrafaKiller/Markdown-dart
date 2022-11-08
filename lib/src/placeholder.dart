@@ -14,23 +14,17 @@ class MarkdownPlaceholder {
   /// The result of this method will be used to replace the match.
   final MarkdownReplace replace;
 
-  /// If set to `true`, the placeholder will throw an exception when parsing if
-  /// an instance of the pattern is missing a start or end token.
-  /// 
-  /// If set to `false`, the placeholder will ignore the missing token and leave it as is.
-  final bool strict;
-
-  MarkdownPlaceholder(this.pattern, this.replace, { this.strict = false });
+  MarkdownPlaceholder(this.pattern, this.replace);
   
   /// Apply the placeholder to an input. It will parse the input and apply the replace method to all instances of the pattern.
-  String apply(String input, { int level = 0 }) {
-    final nodes = _parseAll(input, level);
+  String apply(String input, { int level = 0, bool strict = false }) {
+    final nodes = _parseAll(input, level: level);
     if (nodes.isEmpty) return input;
 
     if (strict) {
       final endIndex = MarkdownNode.endOfAll(nodes);
       if ((pattern.nextLevel(input.substring(endIndex), level) ?? level) < 0) {
-        final end = pattern.end.firstMatch(input.substring(endIndex))!;
+        final end = pattern.endEscaped.firstMatch(input.substring(endIndex))!;
 
         throw MarkdownMissingTokenError(
           pattern,
@@ -42,8 +36,7 @@ class MarkdownPlaceholder {
       }
     }
 
-    final result = _applyAll(nodes);
-    return pattern.unescape(result);
+    return _applyAll(nodes);
   }
 
   String _applyAll(List<MarkdownNode> nodes) {
@@ -57,8 +50,8 @@ class MarkdownPlaceholder {
     return result;
   }
 
-  MarkdownNode? _parse(String input, [ int level = 0, bool levelIncreased = false ]) {
-    final start = pattern.escapedStart.firstMatch(input);
+  MarkdownNode? _parse(String input, { int level = 0, bool strict = false }) {
+    final start = pattern.startEscaped.firstMatch(input);
     if (start == null) return null;
 
     final end = pattern.findEnd(input.substring(start.end), level: level + 1);
@@ -83,7 +76,7 @@ class MarkdownPlaceholder {
       );
     }
 
-    final node = _parse(input.substring(start.end), level, true);
+    final node = _parse(input.substring(start.end), level: level);
     if (node == null) return null;
 
     return node.clone(
@@ -93,10 +86,10 @@ class MarkdownPlaceholder {
     );
   }
 
-  List<MarkdownNode> _parseAll(String input, [ int level = 0 ]) {
+  List<MarkdownNode> _parseAll(String input, { int level = 0, bool strict = false }) {
     final nested = <MarkdownNode>[];
     while (true) {
-      final node = _parse(input, level);
+      final node = _parse(input, level: level, strict: strict);
       if (node == null) break;
       nested.add(node);
       input = input.substring(node.end.end);
@@ -112,11 +105,7 @@ class MarkdownPlaceholder {
     MarkdownReplace replace,
     { String? end, bool strict = false }
   ) {
-    return MarkdownPlaceholder(
-      MarkdownPattern.string(start, end),
-      replace,
-      strict: strict,
-    );
+    return MarkdownPlaceholder(MarkdownPattern.string(start, end), replace);
   }
 
   /// A markdown placeholder with an [enclosed pattern](https://pub.dev/documentation/marked/latest/marked/MarkdownPattern/MarkdownPattern.enclosed.html).
@@ -125,11 +114,7 @@ class MarkdownPlaceholder {
     MarkdownReplace replace,
     { String? end, bool strict = false }
   ) {
-    return MarkdownPlaceholder(
-      MarkdownPattern.enclosed(start, end),
-      replace,
-      strict: strict,
-    );
+    return MarkdownPlaceholder(MarkdownPattern.enclosed(start, end), replace);
   }
 
   /// A markdown placeholder with a [regexp pattern](https://pub.dev/documentation/marked/latest/marked/MarkdownPattern/MarkdownPattern.regexp.html).
@@ -138,11 +123,7 @@ class MarkdownPlaceholder {
     MarkdownReplace replace,
     { String? end, bool strict = false }
   ) {
-    return MarkdownPlaceholder(
-      MarkdownPattern.regexp(start, end),
-      replace,
-      strict: strict,
-    );
+    return MarkdownPlaceholder(MarkdownPattern.regexp(start, end), replace);
   }
 
   /// A markdown placeholder with a [tag pattern](https://pub.dev/documentation/marked/latest/marked/MarkdownPattern/MarkdownPattern.tag.html).
@@ -151,11 +132,7 @@ class MarkdownPlaceholder {
     MarkdownReplace replace,
     { String? end, Set<String> properties = const {}, bool strict = false }
   ) {
-    return MarkdownPlaceholder(
-      MarkdownPattern.tag(start, end, properties),
-      replace,
-      strict: strict,
-    );
+    return MarkdownPlaceholder(MarkdownPattern.tag(start, end, properties), replace);
   }
 
   /// A markdown placeholder with a [symmetrical pattern](https://pub.dev/documentation/marked/latest/marked/MarkdownPattern/MarkdownPattern.symmetrical.html).
@@ -164,11 +141,7 @@ class MarkdownPlaceholder {
     MarkdownReplace replace,
     { bool nested = true, bool sticky = false, bool strict = false }
   ) {
-    return MarkdownPlaceholder(
-      MarkdownPattern.symmetrical(start, nested: nested, sticky: sticky),
-      replace,
-      strict: strict,
-    );
+    return MarkdownPlaceholder(MarkdownPattern.symmetrical(start, nested: nested, sticky: sticky), replace);
   }
 }
 

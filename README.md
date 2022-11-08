@@ -76,28 +76,10 @@ MarkdownPlaceholder.regexp(r'\*\*(.*?)\*\*', (text, match) => '<b>$text</b>');
 // Hello **World**! -> Hello <b>World</b>!
 ```
 
-When creating a placeholder, you can attribute a name to it. This allows you to specify which placeholder to apply.
-```dart
-... ({
-  MarkdownPlaceholder(name: 'bold', ... );
-});
+## Escaping
 
-markdown.apply('Hello, **World**!', { 'bold' });
-```
-
-## ~~Escaping~~ (Not implemented yet)
-
-...
-
-<!--
-  You can set an escape pattern to prevent placeholders from being applied.
-  To disable escaping, set the `escape` to an empty string.
-
-  You may also escape the escape by repeating it twice, although you will only need to escape the ones before placeholders.
-
-  When escaping a block of placeholders, it will block all placeholders directly in front of it.
-
-  By default, the escape pattern is set to `\`.
+  To escape a placeholder, you can use the `\` character.
+  You may also escape the escape character, instances of **\\\\** will be replaced with **\\**, since they are escaped.
 
   ```dart
   final markdown = Markdown.map({ ... }, escape: r'\');
@@ -115,7 +97,8 @@ markdown.apply('Hello, **World**!', { 'bold' });
   //   Hello **World**!
   //   Hello \<b>World</b>!
   ```
--->
+
+  An input can be manually escaped and unescaped using the methods `markdown.escape(input)` and `markdown.unescape(input)`.
 
 ## Example
 
@@ -132,7 +115,7 @@ final htmlMarkdown = Markdown({
 void main() {
   print(htmlMarkdown.apply('HTML Markdown: **bold** *italic* ~~strike~~ `code`'));
   // [Output]
-  // HTML Markdown: <b>bold</b> <i>italic</i> <strike>strike</strike> <code>code</code>
+  //   HTML Markdown: <b>bold</b> <i>italic</i> <strike>strike</strike> <code>code</code>
 }
 ```
 

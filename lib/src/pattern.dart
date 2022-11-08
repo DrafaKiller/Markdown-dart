@@ -6,8 +6,8 @@ class MarkdownPattern {
 
   MarkdownPattern(this.start, [ RegExp? end ]) : this.end = end ?? RegExp('');
 
-  RegExp get escapedStart => escape(start);
-  RegExp get escapedEnd => escape(end);
+  RegExp get startEscaped => escaped(start);
+  RegExp get endEscaped => escaped(end);
 
   /// Whether the pattern is consists only of a single type of character, for example `**`.
   bool get uniqueCharater => isUniqueCharater(start.pattern);
@@ -21,8 +21,8 @@ class MarkdownPattern {
   bool get singleToken => end.pattern.isEmpty;
 
   int? nextLevel(String input, [ int level = 0 ]) {
-    final start = this.escapedStart.firstMatch(input);
-    final end = this.escapedEnd.firstMatch(input);
+    final start = this.startEscaped.firstMatch(input);
+    final end = this.endEscaped.firstMatch(input);
     
     if (symmetrical) {
       if (end == null) return null;
@@ -43,12 +43,12 @@ class MarkdownPattern {
 
     if (next == null) return null;
     if (next < level || (next == level && !isIncreasing)) {
-      final end = this.end.firstMatch(input);
+      final end = this.endEscaped.firstMatch(input);
       if (end == null) return null;
       return MarkdownMatch(end, offset);
     }
 
-    final start = this.escapedStart.firstMatch(input)!;
+    final start = this.startEscaped.firstMatch(input)!;
     final nextEnd = findEnd(input.substring(start.end), level: level + 1, offset: offset + start.end, isIncreasing: true);
     if (nextEnd == null) return null;
 
@@ -58,24 +58,23 @@ class MarkdownPattern {
     return lastEnd;
   }
 
+  /* -= Escaping =- */
+
+  static String escapePattern = r'(?<=(?<!\\)(?:\\\\)*)';
+  static String unescapePattern = escapePattern + r'\\';
+
+  static RegExp escaped(Pattern pattern) {
+    if (pattern is RegExp) return RegExp(escapePattern + pattern.pattern);
+    return RegExp(escapePattern + pattern.toString());
+  }
+
+  String escape(String input) => input.replaceAllMapped(RegExp(start.pattern), (match) => '\\${match.group(0)}');
+  
+  String unescape(String input) => input.replaceAll(RegExp('$unescapePattern(?=${ start.pattern }|${ end.pattern })'), '');
+
   /* -= Static =- */
 
   static bool isUniqueCharater(String input) => input.split('').toSet().length == 1;
-
-  static String escapePattern = r'(?<=(?<!\\)(?:\\\\)*)';
-  static String escapeSelectedPattern = r'(?<=(?<!\\)(?<extra_escaping>\\\\)*)';
-
-  static RegExp escape(Pattern pattern, { bool selected = false }) {
-    if (pattern is RegExp) return RegExp((!selected ? escapePattern : escapeSelectedPattern) + pattern.pattern);
-    return RegExp((!selected ? escapePattern : escapeSelectedPattern) + pattern.toString());
-  }
-  
-  String unescape(String input) {
-    final escaping = escape('\\\\(?=${ start.pattern }|${ end.pattern })', selected: true);
-    return input.replaceAllMapped(escaping, (match) {
-      return (match as RegExpMatch).namedGroup('extra_escaping')?.replaceAll(r'\\', r'\') ?? '';
-    });
-  }
 
   /* -= Alternatives =- */
 

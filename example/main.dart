@@ -3,9 +3,10 @@ import 'package:marked/marked.dart';
 final markdown = Markdown.map({
   '**': (text, match) => '<b>$text</b>',
   '*': (text, match) => '<i>$text</i>',
+  '***': (text, match) => '<i>$text</i>',
   '__': (text, match) => '<u>$text</u>',
   '<custom>' : (text, match) => '<tag>$text</tag>',
-}, {
+}, placeholders: {
   MarkdownPlaceholder.enclosed(
     'from here', end: 'to here',
     (text, match) => '[$text]'
@@ -13,12 +14,10 @@ final markdown = Markdown.map({
 });
 
 void main() {
-  print(markdown.placeholders.toList()[2].pattern.unescape(r'\\\\\*test*'));
-  
   print(
     markdown.apply('''
       Hello **World**!
-      __Looks \\*pretty* easy__
+      __Looks *pretty* easy__ 
       <custom>Custom tags</custom>
       from here ... do anything ... to here
     ''')

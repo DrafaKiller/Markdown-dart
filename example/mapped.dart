@@ -5,7 +5,7 @@ final markdown = Markdown.map({
   '[*]': (text, match) => '<i>$text</i>',
   '<tag>': (text, match) => '<other>$text</other>',
   '/from here(.*?)to here/': (text, match) => '[$text]'
-}, {
+}, placeholders: {
   MarkdownPlaceholder.enclosed('/*', end: '*/', (text, match) => '<comment>$text</comment>'),
 });
 

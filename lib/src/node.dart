@@ -10,10 +10,11 @@ class MarkdownNode {
 
   String? _cachedApply;
 
-  String get text =>
-    placeholder.pattern.singleToken
-      ? (start.match.groupCount > 0 ? start.match.group(1)! : '')
+  String get text {
+    return placeholder.pattern.singleToken
+      ? (start.match.groupCount > 0 ? start.match.group(1) ?? '' : '')
       : input.substring(start.end, end.start);
+  }
 
   String get startText => start.match.group(0)!;
   String get endText => end.match.group(0)!;

@@ -4,15 +4,39 @@ import 'package:marked/src/placeholder.dart';
 class Markdown {
   final Set<MarkdownPlaceholder> placeholders;
 
-  Markdown(this.placeholders);
+  /// If set to `true`, the placeholder will throw an exception when parsing if
+  /// an instance of the pattern is missing a start or end token.
+  /// 
+  /// If set to `false`, the placeholder will ignore the missing token and leave it as is.
+  final bool strict;
+
+  Markdown(this.placeholders, { this.strict = false });
 
   /// Apply the markdown on an input.
   /// 
   /// Essentially, this method will apply all the placeholders
   String apply(String input) {
     for (final placeholder in placeholders) {
-      input = placeholder.apply(input);
+      input = placeholder.apply(input, strict: strict);
     }
+
+    return unescape(input);
+  }
+
+  String escape(String input) {
+    input = input.replaceAll(r'\', r'\\');
+    for (final placeholder in placeholders) {
+      input = placeholder.pattern.escape(input);
+    }
+    return input;
+  }
+
+  String unescape(String input) {
+    for (final placeholder in placeholders) {
+      input = placeholder.pattern.unescape(input);
+    }
+    input = input.replaceAll(r'\\', r'\');
+
     return input;
   }
 
@@ -63,9 +87,10 @@ class Markdown {
   ///   Tags may have properties, which are of pattern `key[="value"]`.<br>
   ///   Properties are strict and specified, unless it contains `*`.<br>
   ///   Properties can be specified when mapping like `<tag prop1|...>`, and can be fetched using **match.tagProperties**. 
-  factory Markdown.map(Map<String, MarkdownReplace> map, [ Set<MarkdownPlaceholder>? placeholders ]) {
+  factory Markdown.map(Map<String, MarkdownReplace> map, { Set<MarkdownPlaceholder>? placeholders, bool strict = false }) {
     placeholders ??= <MarkdownPlaceholder>{};
     return Markdown(
+      strict: strict,
       placeholders..addAll(
         map.entries
           .map((entry) {
