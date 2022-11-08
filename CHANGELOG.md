@@ -1,11 +1,16 @@
+## 0.2.1
+
+Added:
+- Basic placeholder alternative, for single token replacements
+
 ## 0.2.0
 
 BREAKING CHANGES:
 - The markdown was refactored to process the input sequentially using a start and end token,
-instead of a single matching RegExp.
-- Contains escape sequences for the start and end tokens, so that they can be used in the input text.
-- The API was all changed to be more consistent and to allow for more flexibility.
-- Added many other placeholder alternatives.
+instead of a single matching RegExp
+- Contains escape sequences for the start and end tokens, so that they can be used in the input text
+- The API was all changed to be more consistent and to allow for more flexibility
+- Added many other placeholder alternatives
 
 ## 0.1.0
 
