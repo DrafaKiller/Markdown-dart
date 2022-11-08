@@ -70,6 +70,9 @@ class Markdown {
   /// **Normal** - prefix `normal: `<br>
   ///   Applies the default placeholder, which is **enclosed**.
   /// 
+  /// **Basic** - prefix `basic: `<br>
+  ///  Applies a placeholder with only a start token, for a basic replacement.
+  /// 
   /// **Enclosed** - prefix `enclosed: `<br>
   ///   Starts and ends with the same token, like **\*** for `*text*`.
   /// 
@@ -101,6 +104,9 @@ class Markdown {
             if (pattern.startsWith('normal: ')) {
               mode = 'normal';
               pattern = pattern.substring(8);
+            } else if (pattern.startsWith('basic: ')) {
+              mode = 'basic';
+              pattern = pattern.substring(7);
             } else if (pattern.startsWith('enclosed: ')) {
               mode = 'enclosed';
               pattern = pattern.substring(10);
@@ -135,6 +141,9 @@ class Markdown {
             switch (mode) {
               case 'normal':
                 return MarkdownPlaceholder.enclosed(pattern, replace);
+
+              case 'basic':
+                return MarkdownPlaceholder.string(pattern, replace);
 
               case 'regexp':
                 return MarkdownPlaceholder.regexp(pattern, replace);
