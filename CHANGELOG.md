@@ -1,3 +1,8 @@
+## 0.2.2
+
+Changed:
+- Expression object `Match` changed to `RegExpMatch`, to access named groups
+
 ## 0.2.1
 
 Added:

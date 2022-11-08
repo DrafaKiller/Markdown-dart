@@ -1,5 +1,5 @@
 class MarkdownToken {
-  final Match match;
+  final RegExpMatch match;
   final int start;
   final int end;
 
@@ -7,7 +7,7 @@ class MarkdownToken {
 }
 
 class MarkdownMatch {
-  final Match token;
+  final RegExpMatch token;
   final int offset;
 
   MarkdownMatch(this.token, this.offset);

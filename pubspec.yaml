@@ -1,6 +1,6 @@
 name: marked
 description: A simple Markdown parser for Dart. Create your own custom Markdown syntax.
-version: 0.2.1
+version: 0.2.2
 repository: https://github.com/DrafaKiller/Markdown-dart
 issue_tracker: https://github.com/DrafaKiller/Markdown-dart/issues
 
