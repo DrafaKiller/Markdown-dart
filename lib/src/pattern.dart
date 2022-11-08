@@ -150,13 +150,7 @@ class MarkdownPattern {
   }
 
   factory MarkdownPattern.tag(String start, [ String? end, Set<String> properties = const {} ]) {
-    start = RegExp.escape(start)
-      .replaceAll(r'\.\.\.', r'.+?')
-      .replaceAllMapped(RegExp(r'\\\\d(?:\\([\*\+]))?'), (match) => r'\d' + (match.group(1) ?? ''));
-
-    end = end == null ? start : RegExp.escape(end)
-      .replaceAll(r'\.\.\.', r'.+?')
-      .replaceAllMapped(RegExp(r'\\\\d(?:\\([\*\+]))?'), (match) => r'\d' + (match.group(1) ?? ''));
+    end ??= RegExp(r'[\w-.:#]+').firstMatch(start)?.group(0) ?? start;
 
     return MarkdownPattern.regexp(
       '<$start${ properties.isNotEmpty ? _getPropertiesPattern(properties) : '' }>',

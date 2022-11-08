@@ -152,9 +152,9 @@ class Markdown {
                 final tagMatch = _tagDefinitionPattern.firstMatch(pattern);
                 if (tagMatch != null) {
                   final name = tagMatch.namedGroup('name')!;
-                  final properties = (tagMatch.namedGroup('properties') ?? '')
-                    .split('|').map((property) => property.trim()).toSet();
-                    
+                  final propertiesText = tagMatch.namedGroup('properties') ?? '';
+                  final properties = propertiesText.split('|').map((property) => property.trim()).toSet();
+
                   return MarkdownPlaceholder.tag(name, replace, properties: properties);
                 }
                 break;
@@ -188,6 +188,6 @@ class Markdown {
     );
   }
 
-  static final _tagDefinitionPattern = RegExp(r'^<(?<name>\w+)(?<properties>\s+(?:\w+(?:\s*\|\s*)?)*)?>$');
+  static final _tagDefinitionPattern = RegExp(r'^<(?<name>\S+)(?<properties>\s+(?:\s*[\w-.:#]+\s*(?:\||(?=>)))*)?>$');
   static final _splitPattern = RegExp(r'(?<start>.+) \| (?<end>.+)');
 }

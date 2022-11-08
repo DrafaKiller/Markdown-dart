@@ -1,3 +1,9 @@
+## 0.2.3
+
+Changed:
+- Tag placeholder alternative allows Regular Expressions,
+when the `end` is not set, it will conform to the first word found in start. Using a better tag selection.
+
 ## 0.2.2
 
 Changed:

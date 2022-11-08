@@ -27,7 +27,6 @@ class MarkdownPlaceholder {
         final end = pattern.endEscaped.firstMatch(input.substring(endIndex))!;
 
         throw MarkdownMissingTokenError(
-          pattern,
           input: input,
           index: endIndex + end.start,
           length: end.end - end.start,
@@ -68,7 +67,6 @@ class MarkdownPlaceholder {
 
     if (strict) {
       throw MarkdownMissingTokenError(
-        pattern,
         input: input,
         index: start.start,
         length: start.end - start.start,
