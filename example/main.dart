@@ -13,10 +13,12 @@ final markdown = Markdown.map({
 });
 
 void main() {
+  print(markdown.placeholders.toList()[2].pattern.unescape(r'\\\\\*test*'));
+  
   print(
     markdown.apply('''
       Hello **World**!
-      __Looks *pretty* easy__
+      __Looks \\*pretty* easy__
       <custom>Custom tags</custom>
       from here ... do anything ... to here
     ''')

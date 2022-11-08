@@ -23,7 +23,7 @@ class MarkdownPlaceholder {
   MarkdownPlaceholder(this.pattern, this.replace, { this.strict = false });
   
   /// Apply the placeholder to an input. It will parse the input and apply the replace method to all instances of the pattern.
-  String apply(String input, [ int level = 0 ]) {
+  String apply(String input, { int level = 0 }) {
     final nodes = _parseAll(input, level);
     if (nodes.isEmpty) return input;
 
@@ -42,7 +42,8 @@ class MarkdownPlaceholder {
       }
     }
 
-    return _applyAll(nodes);
+    final result = _applyAll(nodes);
+    return pattern.unescape(result);
   }
 
   String _applyAll(List<MarkdownNode> nodes) {
@@ -57,7 +58,7 @@ class MarkdownPlaceholder {
   }
 
   MarkdownNode? _parse(String input, [ int level = 0, bool levelIncreased = false ]) {
-    final start = pattern.start.firstMatch(input);
+    final start = pattern.escapedStart.firstMatch(input);
     if (start == null) return null;
 
     final end = pattern.findEnd(input.substring(start.end), level: level + 1);
