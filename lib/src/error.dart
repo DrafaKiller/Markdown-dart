@@ -1,5 +1,3 @@
-import 'package:marked/src/pattern.dart';
-
 class MarkdownMissingTokenError extends Error {
   final int index;
   final int length;
