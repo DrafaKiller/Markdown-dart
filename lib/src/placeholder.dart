@@ -18,7 +18,7 @@ class MarkdownPlaceholder {
   
   /// Apply the placeholder to an input. It will parse the input and apply the replace method to all instances of the pattern.
   String apply(String input, { int level = 0, bool strict = false }) {
-    final nodes = _parseAll(input, level: level);
+    final nodes = _parseAll(input, level: level, strict: strict);
     if (nodes.isEmpty) return input;
 
     if (strict) {
@@ -62,6 +62,7 @@ class MarkdownPlaceholder {
         start: MarkdownToken(start, start.start, start.end),
         end: MarkdownToken(end.token, start.end + end.offset + end.token.start, start.end + end.offset + end.token.end),
         level: level,
+        strict: strict
       );
     }
 
@@ -74,7 +75,7 @@ class MarkdownPlaceholder {
       );
     }
 
-    final node = _parse(input.substring(start.end), level: level);
+    final node = _parse(input.substring(start.end), level: level, strict: strict);
     if (node == null) return null;
 
     return node.clone(
@@ -85,12 +86,27 @@ class MarkdownPlaceholder {
   }
 
   List<MarkdownNode> _parseAll(String input, { int level = 0, bool strict = false }) {
+    final original = input;
+    int offset = 0;
+
     final nested = <MarkdownNode>[];
     while (true) {
-      final node = _parse(input, level: level, strict: strict);
+      final MarkdownNode? node;
+      try {
+        node = _parse(input, level: level, strict: strict);
+      } on MarkdownMissingTokenError catch (error) {
+        throw MarkdownMissingTokenError(
+          input: original,
+          index: error.start + offset,
+          length: error.length,
+          ending: error.ending,
+        );
+      }
       if (node == null) break;
+      
       nested.add(node);
       input = input.substring(node.end.end);
+      offset += node.end.end;
     }
     return nested;
   }

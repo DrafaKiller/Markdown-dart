@@ -1,9 +1,13 @@
+import 'package:marked/src/error.dart';
+
 class MarkdownToken {
   final RegExpMatch match;
   final int start;
   final int end;
 
   MarkdownToken(this.match, this.start, this.end);
+
+  void throwMissingToken() => throw MarkdownMissingTokenError(input: match.input, index: start, length: end - start);
 }
 
 class MarkdownMatch {

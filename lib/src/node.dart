@@ -7,6 +7,7 @@ class MarkdownNode {
   final MarkdownToken end;
   final String input;
   final int level;
+  final bool strict;
 
   String? _cachedApply;
 
@@ -25,12 +26,13 @@ class MarkdownNode {
     required this.input,
     required this.start,
     required this.end,
-    required this.level
+    required this.level,
+    this.strict = false,
   });
 
   String apply() {
     if (_cachedApply != null) return _cachedApply!;
-    _cachedApply = input.replaceRange(start.start, end.end, placeholder.replace(placeholder.apply(text, level: level), this));
+    _cachedApply = input.replaceRange(start.start, end.end, placeholder.replace(placeholder.apply(text, level: level, strict: strict), this));
     return _cachedApply!;
   }
 
@@ -44,12 +46,14 @@ class MarkdownNode {
     MarkdownToken? end,
     String? input,
     int? level,
+    bool? strict,
   }) => MarkdownNode(
       placeholder ?? this.placeholder,
       input: input ?? this.input,
       start: start ?? this.start,
       end: end ?? this.end,
       level: level ?? this.level,
+      strict: strict ?? this.strict,
     );
 
   static int endOfAll(List<MarkdownNode> nodes, { bool translated = false }) {
