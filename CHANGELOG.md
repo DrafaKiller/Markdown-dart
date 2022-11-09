@@ -1,3 +1,8 @@
+## 0.2.5
+
+Added:
+- Allow setting strict when applying a markdown
+
 ## 0.2.4
 
 Fixed:

@@ -15,9 +15,9 @@ class Markdown {
   /// Apply the markdown on an input.
   /// 
   /// Essentially, this method will apply all the placeholders
-  String apply(String input) {
+  String apply(String input, { bool? strict }) {
     for (final placeholder in placeholders) {
-      input = placeholder.apply(input, strict: strict);
+      input = placeholder.apply(input, strict: strict ?? this.strict);
     }
 
     return unescape(input);
