@@ -81,23 +81,6 @@ MarkdownPlaceholder.regexp(r'\*\*(.*?)\*\*', (text, match) => '<b>$text</b>');
   To escape a placeholder, you can use the `\` character.
   You may also escape the escape character, instances of **\\\\** will be replaced with **\\**, since they are escaped.
 
-  ```dart
-  final markdown = Markdown.map({ ... }, escape: r'\');
-
-  print(
-    markdown.apply(r'''
-      Hello **World**!
-      Hello \**World**!
-      Hello \\**World**!
-    ''')
-  );
-
-  // Output:
-  //   Hello <b>World</b>!
-  //   Hello **World**!
-  //   Hello \<b>World</b>!
-  ```
-
   An input can be manually escaped and unescaped using the methods `markdown.escape(input)` and `markdown.unescape(input)`.
 
 ## Example
