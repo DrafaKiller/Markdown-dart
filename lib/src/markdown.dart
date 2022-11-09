@@ -41,7 +41,7 @@ class Markdown {
   }
 
   /// Simplifies the markdown definition by transforming a set of entries into placeholders,
-  /// given the relating string key.
+  /// given the related string key.
   /// 
   /// Usage example, with the following placeholder equivalent:
   /// ```dart

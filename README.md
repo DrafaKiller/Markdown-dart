@@ -3,7 +3,7 @@
 
 # Markdown
 
-A simple-setup Markdown syntax parser for Dart.
+A simple-setup Markdown syntax parser for Dart.<br>
 Create your own custom Markdown syntax.
 
 ## Features
@@ -76,6 +76,44 @@ MarkdownPlaceholder.regexp(r'\*\*(.*?)\*\*', (text, match) => '<b>$text</b>');
 // Hello **World**! -> Hello <b>World</b>!
 ```
 
+## Placeholder Mapping
+
+To Simplify the markdown definition, you may transform a set of entries into placeholders, given the related string key. Using the `Markdown.map()` method.
+
+Usage example, with the following placeholder equivalent:
+```dart
+'*': (text, match) => '<b>$text</b>'
+  MarkdownPlaceholder.enclosed('*', (text, match) => '<b>$text</b>'),
+
+'<custom>': (text, match) => '[$text]'
+  MarkdownPlaceholder.tag('custom', (text, match) => '[$text]'),
+
+'/\*([^*]+)\*/': (text, match) => '<b>$text</b>'
+  MarkdownPlaceholder.regexp('/\*([^*]+)\*/', (text, match) => '<b>$text</b>'),
+```
+
+A prefix can be used to ensure the right placeholder is used. 
+```dart
+'enclosed: *': (text, match) => '<b>$text</b>'
+'tag: <custom>': (text, match) => '[$text]'
+'regexp: \*([^*]+)\*': (text, match) => '<b>$text</b>'
+```
+
+### Types of placeholders: 
+
+| Type | Description | Prefix | Symbol |
+| ---- | ----------- | ------ |	------ |
+| Normal | Applies the default placeholder, which is **enclosed**. | `normal: ` | None |
+| Enclosed | Starts and ends with the same token, like **\*** for `*text*`. | `enclosed: ` | None |
+| Basic | Single token placeholder, for a basic replacement. | `basic: ` | None |
+| Sticky | Same as **enclosed**, but tokens must be next to a character. | `sticky: ` | `[...]` |
+| Split | Splits the start token at ` \| ` to set the end token, like `/* \| */` matching with  `/*text*/`. | `split: ` | `... \| ...` |
+| RegExp | Matches a regular expression, the **text** is the first capture group. | `regexp: ` | `/.../` |
+| Tag | Starts with a tag of type **\<tag>** and ending with **\</tag>**, HTML-like.<br> Tags may have properties, `key[="value"]`, defined as `<tag prop1\|...>`, and can be fetched using `match.tagProperties`.  | `tag: ` | `<...>` |
+
+**Note:**
+When using a unique character token, the created placeholders will be symmetrical with no nesting, this is so it's more intuitive. 
+
 ## Escaping
 
   To escape a placeholder, you can use the `\` character.
@@ -105,4 +143,3 @@ void main() {
 More Examples:
 * [HTML Markdown](https://pub.dev/packages/marked/example)
 * [Markdown Map](https://github.com/DrafaKiller/Markdown-dart/blob/main/example/mapped.dart)
-* [Named Placeholders](https://github.com/DrafaKiller/Markdown-dart/blob/main/example/named.dart)
