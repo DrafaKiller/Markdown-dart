@@ -135,6 +135,7 @@ final htmlMarkdown = Markdown({
 
 void main() {
   print(htmlMarkdown.apply('HTML Markdown: **bold** *italic* ~~strike~~ `code`'));
+  
   // [Output]
   //   HTML Markdown: <b>bold</b> <i>italic</i> <strike>strike</strike> <code>code</code>
 }

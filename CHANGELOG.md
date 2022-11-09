@@ -1,3 +1,9 @@
+## 0.2.4
+
+Fixed:
+- Improved strict token error, along with `MarkdownMissingTokenError`
+- Tag properties pattern, reworked the Regular Expression to match the properties better
+
 ## 0.2.3
 
 Changed:
