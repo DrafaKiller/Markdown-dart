@@ -174,7 +174,7 @@ class MarkdownPattern {
 
   static _getPropertyPattern([ String? name, bool escape = true ]) =>
     '(${
-      name != null && name.isNotEmpty && name != '*' ? (escape ? RegExp.escape(name) : name) : r'\w+'
+      name != null && name.isNotEmpty && name != '*' ? (escape ? RegExp.escape(name) : name) : r'[\w-.:#]+'
     })(?:=["\']([^"\']*?)["\'])?';
 
   static _getPropertiesPattern([ Set<String> properties = const {} ]) =>
